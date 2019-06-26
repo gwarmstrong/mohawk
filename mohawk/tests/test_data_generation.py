@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 import pandas as pd
-from mohawk.data_generation import _get_ids_not_downloaded
+from mohawk.data_downloader import _get_ids_not_downloaded
 
 
 class TestGetIdsNotDownLoaded(unittest.TestCase):
