@@ -45,8 +45,9 @@ def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
 
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
-                    genomes_directory: str) -> bool:
+                    genomes_directory: str) -> List[str]:
 
+    fasta_filenames = []
     for id_ in id_list:
         # TODO change into a getter that is passed in
         def ftp_path(id_): return genomes_metadata['ftp_path'].loc[id_]
@@ -56,8 +57,9 @@ def _file_gunzipper(id_list: List[str],
         fna_gz_filename = os.path.join(genomes_directory, id_, filename)
         fna_filename = gz_stripper(fna_gz_filename)
         _gunzip(fna_gz_filename, fna_filename)
+        fasta_filenames.append(fna_filename)
 
-    return True
+    return fasta_filenames
 
 
 def gz_stripper(filename: str) -> str:
@@ -129,10 +131,12 @@ def _get_ids_not_downloaded(id_list: List[str],
                                           id_)
         fna_gz_name = get_fna_name(ftp_path(id_))
         fna_name = gz_stripper(fna_gz_name)
+
         try:
             existing_files = set(os.listdir(expected_local_dir))
             fna_present = fna_name in existing_files
             fna_gz_present = fna_gz_name in existing_files
+            # the logic here is a little tricky, see note above
             if not fna_only:
                 if not fna_present and not fna_gz_present:
                     ids_to_download.append(id_)
@@ -156,7 +160,7 @@ def _get_ids_not_downloaded(id_list: List[str],
 # TODO this name
 def _assure_all_data(id_list: List[str],
                      genomes_metadata: pd.DataFrame,
-                     genomes_directory: Optional[str]) -> bool:
+                     genomes_directory: Optional[str]) -> List[str]:
 
     if genomes_directory is None:
         genomes_directory = os.path.curdir()
@@ -181,37 +185,18 @@ def _assure_all_data(id_list: List[str],
     ids_to_gunzip = _get_ids_not_downloaded(id_list, genomes_metadata,
                                             genomes_directory, fna_only=True)
 
-    _file_gunzipper(ids_to_gunzip, genomes_metadata, genomes_directory)
+    fasta_filenames = _file_gunzipper(ids_to_gunzip,
+                                      genomes_metadata,
+                                      genomes_directory)
 
-    return True
-
-
-# potential for shuffle option ? -> argshuffle
-def _data_generator(genome_ids: List[str],
-                    taxonomic_rank: str,
-                    read_length: int,
-                    reads_per_sample: int,
-                    genomes_metadata: pd.DataFrame,
-                    genomes_directory: Optional[str],
-                    random_seed: Optional[int]) -> Tuple[List[str], List[int]]:
-
-    # for each `genome` in `genome_ids` (found in `input_directory`):
-        # generate `sequences_per_genome` reads of length
-        #   `read_length` from genome
-        # figure out appropriate class for genome (based on `rank`)
-
-    pass
+    return fasta_filenames
 
 
 def data_generator(genome_ids: List[str],
-                   taxonomic_rank: str,
-                   read_length: int,
-                   reads_per_sample: int,
-                   distribution: Optional[Dict[str, float]] = None,
                    genomes_directory: Optional[str] = None,
-                   sample_directory: Optional[str] = None,
-                   random_seed: Optional[int] = None,
-                   channel: Optional[str] = 'representative') -> str:
+                   channel: Optional[str] = 'representative') -> List[str]:
+
+    # returns pathst to all genomes asked for
 
     # option handling
 
@@ -226,10 +211,11 @@ def data_generator(genome_ids: List[str],
                          "'representative' and 'complete'.")
 
     # make sure all genomes are downloaded (download if not)
-    _assure_all_data(genome_ids, genomes_metadata, genomes_directory)
+    fasta_filenames = _assure_all_data(genome_ids,
+                                       genomes_metadata,
+                                       genomes_directory)
 
     # use _data_generator to take each genome id and generate the reads
 
-    # write out fastq files and class file
+    return fasta_filenames
 
-    pass
