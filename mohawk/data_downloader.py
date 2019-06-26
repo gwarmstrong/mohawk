@@ -1,17 +1,24 @@
 import os
 import gzip
 import shutil
-import numpy as np
 import pandas as pd
 from ftplib import FTP
-from typing import List, Tuple, Optional, Dict
+from typing import List, Optional
+from pkg_resources import resource_stream
 
 ranks = ['infraspecific_name', 'species', 'genus', 'family', 'order', 'class',
          'phylum', 'superkingdom']
 
-representative_genomes_file = 'refseq_representative_genomes_taxonomy_slim.txt'
+# TODO setup using pkg_resources
+# representative_genomes_file = \
+#     'resources/refseq_representative_genomes_lineage.txt'
+representative_genomes_file = resource_stream(
+        'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
+        )
 
-complete_genomes_file = 'refseq_complete_genomes_taxonomy_slim.txt'
+
+complete_genomes_file = resource_stream(
+        'mohawk.resources', 'refseq_complete_genomes_ftp.txt')
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
@@ -21,12 +28,10 @@ def _ncbi_ftp_downloader(id_list: List[str],
     ftp = FTP('ftp.ncbi.nih.gov')
     ftp.login(user='anonymous', passwd='example@net.com')
     for id_ in id_list:
-        # TODO change into a getter that is passed in
-        def ftp_path(id_): return genomes_metadata['ftp_path'].loc[id_] #
-        abspath = ftp_path(id_)
+        abspath = _ftp_path(id_, genomes_metadata)
         ftp_dir = get_ftp_dir(abspath)
         ftp.cwd(ftp_dir)
-        filename = get_fna_name(ftp_dir)
+        filename = get_fna_name(id_, genomes_metadata) #get_fna_name(ftp_dir)
         local_dir = os.path.join(genomes_directory, id_, filename)
         ftp.retrbinary("RETR " + filename, open(local_dir, 'wb').write)
 
@@ -43,17 +48,26 @@ def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
     return True
 
 
+def _ftp_path(id_, genomes_metadata):
+    return genomes_metadata['ftp_path'].loc[id_]
+
+
+def get_fna_name(id_, genomes_metadata) -> str:
+
+    #return ftp_dir.split('/')[-1] + '_genomic.fna.gz'
+    return genomes_metadata['fna_gz_name'].loc[id_]
+
+
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
                     genomes_directory: str) -> List[str]:
 
     fasta_filenames = []
     for id_ in id_list:
-        # TODO change into a getter that is passed in
-        def ftp_path(id_): return genomes_metadata['ftp_path'].loc[id_]
-        abspath = ftp_path(id_)
+        abspath = _ftp_path(id_, genomes_metadata)
         ftp_dir = get_ftp_dir(abspath)
-        filename = get_fna_name(ftp_dir)
+        #filename = get_fna_name(ftp_dir)
+        filename = get_fna_name(id_, genomes_metadata)
         fna_gz_filename = os.path.join(genomes_directory, id_, filename)
         fna_filename = gz_stripper(fna_gz_filename)
         _gunzip(fna_gz_filename, fna_filename)
@@ -67,11 +81,6 @@ def gz_stripper(filename: str) -> str:
         return filename[:-3]
     else:
         return filename
-
-
-def get_fna_name(ftp_dir: str) -> str:
-
-    return ftp_dir.split('/')[-1] + '_genomic.fna.gz'
 
 
 def get_ftp_dir(abspath: str) -> str:
@@ -123,13 +132,13 @@ def _get_ids_not_downloaded(id_list: List[str],
     if genomes_directory is None:
         genomes_directory = os.path.curdir()
 
-    def ftp_path(id_): return genomes_metadata['ftp_path'].loc[id_]
-
     ids_to_download = []
     for id_ in id_list:
         expected_local_dir = os.path.join(genomes_directory,
                                           id_)
-        fna_gz_name = get_fna_name(ftp_path(id_))
+        fna_gz_name = get_fna_name(id_, genomes_metadata)#get_fna_name(
+        # _ftp_path(id_,
+        # genomes_metadata))
         fna_name = gz_stripper(fna_gz_name)
 
         try:
@@ -157,7 +166,6 @@ def _get_ids_not_downloaded(id_list: List[str],
     return ids_to_download
 
 
-# TODO this name
 def _assure_all_data(id_list: List[str],
                      genomes_metadata: pd.DataFrame,
                      genomes_directory: Optional[str]) -> List[str]:
@@ -165,7 +173,6 @@ def _assure_all_data(id_list: List[str],
     if genomes_directory is None:
         genomes_directory = os.path.curdir()
 
-    # TODO catch a ValueError for the id passed not being in the channel
     possible_ids = set(genomes_metadata.index)
     for id_ in id_list:
         if id_ not in possible_ids:
@@ -192,13 +199,9 @@ def _assure_all_data(id_list: List[str],
     return fasta_filenames
 
 
-def data_generator(genome_ids: List[str],
-                   genomes_directory: Optional[str] = None,
-                   channel: Optional[str] = 'representative') -> List[str]:
-
-    # returns pathst to all genomes asked for
-
-    # option handling
+def data_downloader(genome_ids: List[str],
+                    genomes_directory: Optional[str] = None,
+                    channel: Optional[str] = 'representative') -> List[str]:
 
     if channel == 'representative':
         genomes_metadata = pd.read_csv(representative_genomes_file,
@@ -214,8 +217,6 @@ def data_generator(genome_ids: List[str],
     fasta_filenames = _assure_all_data(genome_ids,
                                        genomes_metadata,
                                        genomes_directory)
-
-    # use _data_generator to take each genome id and generate the reads
 
     return fasta_filenames
 
