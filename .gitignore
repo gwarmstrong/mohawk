@@ -111,3 +111,4 @@ venv.bak/
 
 # data for this project
 data/
+mohawk/resources/*.txt
