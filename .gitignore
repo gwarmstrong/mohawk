@@ -108,3 +108,6 @@ venv.bak/
 
 # vim
 *.swp
+
+# data for this project
+data/
