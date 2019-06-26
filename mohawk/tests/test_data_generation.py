@@ -9,7 +9,8 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
     def setUp(self) -> None:
         self.id_list = ['ExpA', 'ExpB']
         self.genomes_metadata = pd.DataFrame({'ftp_path': [
-            'ftp://path/to/ftp/id_A', 'ftp://path/to/ftp/id_B']},
+            'ftp://path/to/ftp/id_A', 'ftp://path/to/ftp/id_B'],
+            'fna_gz_name': ['id_A_genomic.fna.gz', 'id_B_genomic.fna.gz']},
             index=self.id_list)
         self.genomes_directory = '/some/path/to/dir'
 
