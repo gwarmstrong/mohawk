@@ -62,7 +62,7 @@ included_in_refseq_info = complete_genomes_info.loc[included_in_refseq]
 lineage_info = [get_lineage_array(id_) for id_ in included_in_refseq_info[
                 'taxid']]
 
-lineage_df = pd.DataFrame(lineage_info, columns = ranks)
+lineage_df = pd.DataFrame(lineage_info, columns=ranks)
 lineage_df.index = included_in_refseq_info.index
 lineage_df['infraspecific_name'] = included_in_refseq_info[
     'infraspecific_name']
