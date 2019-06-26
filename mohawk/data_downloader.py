@@ -6,16 +6,9 @@ from ftplib import FTP
 from typing import List, Optional
 from pkg_resources import resource_stream
 
-ranks = ['infraspecific_name', 'species', 'genus', 'family', 'order', 'class',
-         'phylum', 'superkingdom']
-
-# TODO setup using pkg_resources
-# representative_genomes_file = \
-#     'resources/refseq_representative_genomes_lineage.txt'
 representative_genomes_file = resource_stream(
         'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
         )
-
 
 complete_genomes_file = resource_stream(
         'mohawk.resources', 'refseq_complete_genomes_ftp.txt')
@@ -31,7 +24,7 @@ def _ncbi_ftp_downloader(id_list: List[str],
         abspath = _ftp_path(id_, genomes_metadata)
         ftp_dir = get_ftp_dir(abspath)
         ftp.cwd(ftp_dir)
-        filename = get_fna_name(id_, genomes_metadata) #get_fna_name(ftp_dir)
+        filename = get_fna_name(id_, genomes_metadata)
         local_dir = os.path.join(genomes_directory, id_, filename)
         ftp.retrbinary("RETR " + filename, open(local_dir, 'wb').write)
 
@@ -54,26 +47,18 @@ def _ftp_path(id_, genomes_metadata):
 
 def get_fna_name(id_, genomes_metadata) -> str:
 
-    #return ftp_dir.split('/')[-1] + '_genomic.fna.gz'
     return genomes_metadata['fna_gz_name'].loc[id_]
 
 
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
-                    genomes_directory: str) -> List[str]:
+                    genomes_directory: str) -> None:
 
-    fasta_filenames = []
     for id_ in id_list:
-        abspath = _ftp_path(id_, genomes_metadata)
-        ftp_dir = get_ftp_dir(abspath)
-        #filename = get_fna_name(ftp_dir)
         filename = get_fna_name(id_, genomes_metadata)
         fna_gz_filename = os.path.join(genomes_directory, id_, filename)
         fna_filename = gz_stripper(fna_gz_filename)
         _gunzip(fna_gz_filename, fna_filename)
-        fasta_filenames.append(fna_filename)
-
-    return fasta_filenames
 
 
 def gz_stripper(filename: str) -> str:
@@ -136,9 +121,7 @@ def _get_ids_not_downloaded(id_list: List[str],
     for id_ in id_list:
         expected_local_dir = os.path.join(genomes_directory,
                                           id_)
-        fna_gz_name = get_fna_name(id_, genomes_metadata)#get_fna_name(
-        # _ftp_path(id_,
-        # genomes_metadata))
+        fna_gz_name = get_fna_name(id_, genomes_metadata)
         fna_name = gz_stripper(fna_gz_name)
 
         try:
@@ -192,11 +175,12 @@ def _assure_all_data(id_list: List[str],
     ids_to_gunzip = _get_ids_not_downloaded(id_list, genomes_metadata,
                                             genomes_directory, fna_only=True)
 
-    fasta_filenames = _file_gunzipper(ids_to_gunzip,
-                                      genomes_metadata,
-                                      genomes_directory)
+    _file_gunzipper(ids_to_gunzip, genomes_metadata, genomes_directory)
 
-    return fasta_filenames
+    id_file_list = [(id_, gz_stripper(get_fna_name(id_, genomes_metadata)))
+                    for id_ in id_list]
+
+    return [os.path.join(genomes_directory, *pair) for pair in id_file_list]
 
 
 def data_downloader(genome_ids: List[str],
