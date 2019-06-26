@@ -94,15 +94,31 @@ representatives_slim.to_csv('refseq_representative_genomes_taxonomy_slim.txt', s
 
 ```
 
-```python
-from ftplib import FTP
-ftp = FTP('ftp.ncbi.nih.gov')
-def get_ftp_dir(abspath): return '/' + '/'.join(abspath.split('/')[3:])
+## TODO
 
-```
+[ ] split taxonomy_slim into two files
 
+    [ ] one with just taxonomy/lineage for assembly_accession
+    
+    [ ] one with just ftp link for assembly_accession
+    
+[ ] use  into_numbers framework to generate training data for a given trial
 
+    [ ] use multinomial to sample from distribution of abundances
+    
+        [ ] noisy (shouldn't align) reads?
+        
+    [ ] distributions of different sizes?
+    
+    [ ] paired end reads?
 
+[ ] write script for generating ftp_link/taxon files
 
+[ ] start writing models
 
+[ ] make data_generator object oriented?
 
+[ ] more/better unit testing
+
+[ ] consider renaming data_generator to something else: like data_crawler 
+that indicates it is getting data from ncbi, not _generating_ it
