@@ -6,6 +6,8 @@ from ftplib import FTP
 from typing import List, Optional
 from pkg_resources import resource_stream
 
+from mohawk.utils import _ftp_path, get_fna_name, gz_stripper
+
 representative_genomes_file = resource_stream(
         'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
         )
@@ -41,15 +43,6 @@ def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
     return True
 
 
-def _ftp_path(id_, genomes_metadata):
-    return genomes_metadata['ftp_path'].loc[id_]
-
-
-def get_fna_name(id_, genomes_metadata) -> str:
-
-    return genomes_metadata['fna_gz_name'].loc[id_]
-
-
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
                     genomes_directory: str) -> None:
@@ -59,13 +52,6 @@ def _file_gunzipper(id_list: List[str],
         fna_gz_filename = os.path.join(genomes_directory, id_, filename)
         fna_filename = gz_stripper(fna_gz_filename)
         _gunzip(fna_gz_filename, fna_filename)
-
-
-def gz_stripper(filename: str) -> str:
-    if filename[-3:] == '.gz':
-        return filename[:-3]
-    else:
-        return filename
 
 
 def get_ftp_dir(abspath: str) -> str:
