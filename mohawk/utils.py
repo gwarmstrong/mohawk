@@ -21,3 +21,7 @@ def full_fna_path(sequence_directory, id_, lineage_info):
     fna_gz_name = get_fna_name(id_, lineage_info)
     fna_name = gz_stripper(fna_gz_name)
     return os.path.join(sequence_directory, id_, fna_name)
+
+
+def _get_taxonomy(id_, lineage_info, level):
+    return lineage_info[level].loc[id_]
