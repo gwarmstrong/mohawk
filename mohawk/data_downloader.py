@@ -5,7 +5,6 @@ import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
 from pkg_resources import resource_stream
-
 from mohawk.utils import _ftp_path, get_fna_name, gz_stripper
 
 representative_genomes_file = resource_stream(
