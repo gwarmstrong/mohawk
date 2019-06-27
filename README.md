@@ -11,9 +11,9 @@ let's take a bunch of letters and use them to make numbers, then see if we can u
     
     [ ] Maybe it is actually better to have these together to simplify things
     
-[ ] use  into_numbers framework to generate training data for a given trial
+[x] use  into_numbers framework to generate training data for a given trial
 
-    [ ] use multinomial to sample from distribution of abundances
+    [x] use multinomial to sample from distribution of abundances
     
         [ ] noisy (shouldn't align) reads?
         
@@ -40,6 +40,6 @@ that indicates it is getting data from ncbi, not _generating_ it
     
 [ ] include class level in data generation: (e.g., classes assigned by read, by experiment)
 
-[ ] provide functionality for refreshing databases
+[x] ~~provide functionality for refreshing databases~~ can run setup_genome_downloads.py
 
 [x] have setup_genome_downloads.py run on ~~install~~ when importing if resources do not exist -> also make more elegant
