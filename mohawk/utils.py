@@ -25,3 +25,5 @@ def full_fna_path(sequence_directory, id_, lineage_info):
 
 def _get_taxonomy(id_, lineage_info, level):
     return lineage_info[level].loc[id_]
+
+
