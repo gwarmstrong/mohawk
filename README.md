@@ -43,3 +43,7 @@ that indicates it is getting data from ncbi, not _generating_ it
 [x] ~~provide functionality for refreshing databases~~ can run setup_genome_downloads.py
 
 [x] have setup_genome_downloads.py run on ~~install~~ when importing if resources do not exist -> also make more elegant
+
+[ ] functionality for saving and reading args files -> and building models from these
+
+[ ] inject level labels into names, i.e., 'g_Staphylococcus', 'f_...', etc
