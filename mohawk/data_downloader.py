@@ -134,7 +134,7 @@ def _get_ids_not_downloaded(id_list: List[str],
     return ids_to_download
 
 
-def _assure_all_data(id_list: List[str],
+def _ensure_all_data(id_list: List[str],
                      genomes_metadata: pd.DataFrame,
                      genomes_directory: Optional[str]) -> List[str]:
 
@@ -183,7 +183,7 @@ def data_downloader(genome_ids: List[str],
                          "'representative' and 'complete'.")
 
     # make sure all genomes are downloaded (download if not)
-    fasta_filenames = _assure_all_data(genome_ids,
+    fasta_filenames = _ensure_all_data(genome_ids,
                                        genomes_metadata,
                                        genomes_directory)
 
