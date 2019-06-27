@@ -10,14 +10,14 @@ ranks = ['superkingdom', 'phylum', 'class', 'order', 'family', 'genus',
          'species']
 
 
-def safe_get_lineage(taxid):
+def safe_get_lineage(ncbi, taxid):
     try:
         return ncbi.get_lineage(taxid)
     except ValueError:
         return {}
 
 
-def get_lineage_array(taxid):
+def get_lineage_array(ncbi, taxid):
     lineage = ncbi.get_lineage(taxid)
     rank_dict = ncbi.get_rank(lineage)
     taxid_translator = ncbi.get_taxid_translator(lineage)
@@ -28,11 +28,13 @@ def get_lineage_array(taxid):
             in rank_ids]
 
 
-def resource(file_name_): return os.path.join(resources_dir, file_name_)
+def setup_genome_downloads(base_dir=None):
+    if base_dir is None:
+        base_dir = os.path.curdir()
+    resources_dir = os.path.join(base_dir, 'resources')
 
+    def resource(file_name_): return os.path.join(resources_dir, file_name_)
 
-def setup_genome_downloads():
-    resources_dir = os.path.join('mohawk', 'resources')
     file_name = os.path.join(resources_dir, 'assembly_summary_refseq.txt')
     request.urlretrieve(url, file_name)
 
@@ -46,7 +48,7 @@ def setup_genome_downloads():
     taxids = assembly_info['taxid']
 
     # drop non-bacteria
-    is_bacteria = [2 in safe_get_lineage(id) for id in taxids]
+    is_bacteria = [2 in safe_get_lineage(ncbi, id) for id in taxids]
     bacteria_assembly_info = assembly_info.loc[is_bacteria]
 
     # only keep complete genomes
@@ -60,8 +62,8 @@ def setup_genome_downloads():
     # included_in_refseq_info.to_csv('complete_bacteria_genomes_refseq.txt',
     # sep='\t')
 
-    lineage_info = [get_lineage_array(id_) for id_ in included_in_refseq_info[
-                    'taxid']]
+    lineage_info = [get_lineage_array(ncbi, id_) for id_ in
+                    included_in_refseq_info['taxid']]
 
     lineage_df = pd.DataFrame(lineage_info, columns=ranks)
     lineage_df.index = included_in_refseq_info.index
@@ -109,3 +111,7 @@ def setup_genome_downloads():
     representatives_ftp = representatives_info[ftp_cols]
     representatives_ftp.to_csv(resource('refseq_representative_genomes_ftp.txt'),
                                sep='\t')
+
+
+if __name__ == "__main__":
+    setup_genome_downloads()
