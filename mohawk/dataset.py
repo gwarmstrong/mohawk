@@ -5,8 +5,7 @@ import numpy as np
 
 class SequenceDataset(Dataset):
 
-    def __init__(self, reads, classes, encoder=None):
-        super(self, SequenceDataset).__init__()
+    def __init__(self, reads, classes, ids, encoder=None):
         if len(reads) != len(classes):
             raise ValueError("There must be one class for every read.")
 
@@ -20,12 +19,13 @@ class SequenceDataset(Dataset):
 
         reads_transformed = sequence_ohe.fit_transform(reads)
 
-        reads_matrices = [seq.reshape(read_length, n_bases) for seq in
-                          reads_transformed]
+        reads_matrices = [np.array(seq.todense().reshape(read_length, n_bases))
+                          for seq in reads_transformed]
 
         self.reads = reads_matrices
         self.classes = classes
         self.encoder = encoder
+        self.ids = ids
 
     def __len__(self):
         return len(self.classes)
@@ -36,7 +36,8 @@ class SequenceDataset(Dataset):
 
 def one_hot_encode_classes(classes):
     encoder = OneHotEncoder()
+    new_classes = np.array(classes).reshape(-1, 1)
+    new_classes = encoder.fit_transform(new_classes)
 
-    classes = encoder.fit_transform(classes)
+    return new_classes.todense(), encoder
 
-    return classes, encoder
