@@ -2,18 +2,32 @@ import os
 import numpy as np
 import pandas as pd
 import skbio
-from pkg_resources import resource_stream
+from pkg_resources import resource_stream, resource_exists
 from typing import List, Optional
 
 from mohawk.utils import full_fna_path, _get_taxonomy
 from mohawk._format import sample_from_contig_set
 
-representative_genomes_lineage = resource_stream(
-    'mohawk.resources', 'refseq_representative_genomes_lineage.txt'
-)
 
-complete_genomes_lineage = resource_stream(
-    'mohawk.resources', 'refseq_complete_genomes_lineage.txt')
+def representative_genomes_lineage():
+    if resource_exists('mohawk.resources',
+                       'refseq_representative_genomes_lineage.txt'):
+
+        return resource_stream(
+            'mohawk.resources', 'refseq_representative_genomes_lineage.txt'
+            )
+    else:
+        raise IOError('Unable to find package resources.')
+
+
+def complete_genomes_lineage():
+    if resource_exists('mohawk.resources',
+                       'refseq_complete_genomes_lineage.txt'):
+        return resource_stream(
+            'mohawk.resources', 'refseq_complete_genomes_lineage.txt'
+            )
+    else:
+        raise IOError('Unable to find package resources.')
 
 
 def simulate_from_genomes(id_list: List[str],
@@ -25,10 +39,10 @@ def simulate_from_genomes(id_list: List[str],
                           random_seed: Optional[int] = None):
 
     if channel == 'representative':
-        lineage_info = pd.read_csv(representative_genomes_lineage,
+        lineage_info = pd.read_csv(representative_genomes_lineage(),
                                    sep='\t', index_col=0)
     elif channel == 'complete':
-        lineage_info = pd.read_csv(complete_genomes_lineage, sep='\t',
+        lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
                                    index_col=0)
     else:
         raise ValueError("Invalid choice for `channel`. Options are "
@@ -45,7 +59,6 @@ def simulate_from_genomes(id_list: List[str],
 
     # use multinomial to get number of reads for each id
     id_depths = np.random.multinomial(total_reads, distribution)
-    print('id_depths: {}'.format(id_depths))
 
     # then simulate reads from each
     all_reads = []
@@ -92,10 +105,10 @@ def id_to_lineage(ids: List[str],
     """
 
     if channel == 'representative':
-        lineage_info = pd.read_csv(representative_genomes_lineage,
+        lineage_info = pd.read_csv(representative_genomes_lineage(),
                                    sep='\t', index_col=0)
     elif channel == 'complete':
-        lineage_info = pd.read_csv(complete_genomes_lineage, sep='\t',
+        lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
                                    index_col=0)
     else:
         raise ValueError("Invalid choice for `channel`. Options are "
