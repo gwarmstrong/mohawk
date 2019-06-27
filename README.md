@@ -42,4 +42,4 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 [ ] provide functionality for refreshing databases
 
-[ ] have setup_genome_downloads.py run on install -> also make more elegant
+[x] have setup_genome_downloads.py run on ~~install~~ when importing if resources do not exist -> also make more elegant
