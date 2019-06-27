@@ -1,13 +1,13 @@
 import numpy as np
 from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes, id_to_lineage
-from mohawk.dataset import SequenceDataset, one_hot_encode_classes
+from mohawk.dataset import SequenceDataset, encode_classes
 from typing import Optional, List
-import torch.nn
+from torch import nn
 from torch.utils.data import DataLoader
 
 
-def trainer(model: torch.nn.Module,
+def trainer(model: nn.Module,
             id_list: List[str],
             distribution: List[float],
             total_reads: int,
@@ -15,32 +15,36 @@ def trainer(model: torch.nn.Module,
             train_ratio: float,
             level: Optional[str] = 'genus',
             channel: Optional[str] = 'representative',
-            directory: Optional[str] = None,
+            data_directory: Optional[str] = None,
+            summary_directory: Optional[str] = None,
             random_seed: Optional[int] = None,
-            model_kwargs: Optional[dict] = None,
-            train_kwargs: Optional[dict] = None):
+            model_kwargs: Optional[dict] = dict(),
+            train_kwargs: Optional[dict] = dict(),
+            summary_kwargs: Optional[dict] = dict()):
 
     data_downloader(id_list,
-                    genomes_directory=directory,
+                    genomes_directory=data_directory,
                     channel=channel)
 
     reads, ids = simulate_from_genomes(id_list, distribution, total_reads,
-                                       length, channel, directory, random_seed)
+                                       length, channel, data_directory,
+                                       random_seed)
 
     classes = id_to_lineage(ids, level, channel)
 
-    classes_ohe, encoder = one_hot_encode_classes(classes)
+    # TODO is classes ohe actually necessary?
+    # classes_enc, encoder = encode_classes(classes)
 
     # split into train and validation
-    # TODO clade exclusion
+    # TODO clade exclusion validation
     num_samples = len(classes)
     train_indices, val_indices = train_val_split(num_samples, train_ratio,
                                                  random_seed=random_seed)
 
     # create Dataset and DataLoader for train and validation
-    train_components = prep_reads_classes_ids(reads, classes_ohe, ids,
+    train_components = prep_reads_classes_ids(reads, classes, ids,
                                               train_indices)
-    val_components = prep_reads_classes_ids(reads, classes_ohe, ids,
+    val_components = prep_reads_classes_ids(reads, classes, ids,
                                             val_indices)
 
     train_dataset = SequenceDataset(*train_components)
@@ -49,27 +53,28 @@ def trainer(model: torch.nn.Module,
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=True)
 
-    # train model
-    trained_model = train(model, train_dataloader, val_dataloader,
-                          model_kwargs, **train_kwargs)
+    training_model = model(length=length,
+                           n_classes=len(set(classes)),
+                           seed=random_seed,
+                           **model_kwargs)
+
+    # conv1d complains if there are float's instead of doubles <- could slow
+    # down training
+    training_model.double()
+    # TODO call model.cuda() here
+
+    training_model.fit(train_dataloader,
+                       val_dataset=val_dataloader,
+                       seed=random_seed,
+                       log_dir=summary_directory,
+                       **train_kwargs)
 
     # write out final model and some summary information
     # TODO have a seperate directory for finished model
     # TODO as well as prefix/suffix option for naming
-    trained_model.summarize(directory)
+    training_model.summarize(summary_directory, **summary_kwargs)
 
-
-def train(model: torch.nn.Module,
-          train_data: DataLoader,
-          val_data: Optional[DataLoader],
-          model_kwargs: Optional[dict],
-          **kwargs):
-
-    mod = model(**model_kwargs)
-
-    # TODO write training function
-
-    return mod
+    return training_model
 
 
 def prep_reads_classes_ids(reads, classes, ids, indices):

@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import numpy as np
 
 
@@ -16,13 +16,19 @@ class SequenceDataset(Dataset):
         # will mean we should take
         sequence_ohe = OneHotEncoder(categories=[np.arange(n_bases) for _ in
                                                  range(read_length)])
+        label_enc = LabelEncoder()
 
-        reads_transformed = sequence_ohe.fit_transform(reads)
+        labels = label_enc.fit_transform(classes)
 
-        reads_matrices = [np.array(seq.todense().reshape(read_length, n_bases))
+        reads_transformed = sequence_ohe.fit_transform(reads.astype(int))
+
+        reads_matrices = [np.array(seq.todense())
+                            .reshape(read_length, n_bases)
+                            .T
                           for seq in reads_transformed]
 
         self.reads = reads_matrices
+        self.labels = labels
         self.classes = classes
         self.encoder = encoder
         self.ids = ids
@@ -31,13 +37,14 @@ class SequenceDataset(Dataset):
         return len(self.classes)
 
     def __getitem__(self, idx):
-        return {'read': self.reads[idx], 'label': self.classes[idx]}
+        return {'read': self.reads[idx], 'label': self.labels[idx],
+                'label_english': self.classes[idx]}
 
 
-def one_hot_encode_classes(classes):
-    encoder = OneHotEncoder()
-    new_classes = np.array(classes).reshape(-1, 1)
+def encode_classes(classes):
+    encoder = LabelEncoder()  # OneHotEncoder()
+    new_classes = np.array(classes).reshape(-1, 1).ravel()
     new_classes = encoder.fit_transform(new_classes)
 
-    return new_classes.todense(), encoder
+    return new_classes, encoder #new_classes.todense(), encoder
 
