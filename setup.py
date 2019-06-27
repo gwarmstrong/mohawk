@@ -8,5 +8,6 @@ setup(
     license='BSD-3-Clause',
     author_email="garmstro@eng.ucsd.edu",
     url="https://github.com/gwarmstrong/mohawk",
-    description="Taxonomic Classification and Metagenomic Experiment simulator"
+    description="Taxonomic Classification and Metagenomic Experiment "
+                "simulator",
 )
