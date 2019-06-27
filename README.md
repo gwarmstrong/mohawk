@@ -9,6 +9,8 @@ let's take a bunch of letters and use them to make numbers, then see if we can u
     
     [x] one with just ftp link for assembly_accession
     
+    [ ] Maybe it is actually better to have these together to simplify things
+    
 [ ] use  into_numbers framework to generate training data for a given trial
 
     [ ] use multinomial to sample from distribution of abundances
@@ -37,3 +39,7 @@ that indicates it is getting data from ncbi, not _generating_ it
     [ ] unit test building the ftp link database
     
 [ ] include class level in data generation: (e.g., classes assigned by read, by experiment)
+
+[ ] provide functionality for refreshing databases
+
+[ ] have setup_genome_downloads.py run on install -> also make more elegant
