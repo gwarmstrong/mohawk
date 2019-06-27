@@ -80,7 +80,6 @@ def setup_genome_downloads(base_dir=None):
 
     # print(full_lineage_info.head())
 
-
     lineage_cols = ['taxid', 'fna_gz_name', 'organism_name']
     lineage_cols.extend(ranks)
     lineage_cols.append('infraspecific_name')
@@ -90,10 +89,11 @@ def setup_genome_downloads(base_dir=None):
     # split into `ftp_links` and `lineage`
     complete_lineage = full_lineage_info[lineage_cols]
     complete_lineage.to_csv(resource('refseq_complete_genomes_lineage.txt'),
-                            sep='\t')
+                            sep='\t', na_rep='na')
 
     complete_ftp = full_lineage_info[ftp_cols]
-    complete_ftp.to_csv(resource('refseq_complete_genomes_ftp.txt'), sep='\t')
+    complete_ftp.to_csv(resource('refseq_complete_genomes_ftp.txt'),
+                        sep='\t', na_rep='na')
 
     # drop non-representative genomes
     representative_categories = ['representative genome', 'reference genome']
@@ -106,11 +106,11 @@ def setup_genome_downloads(base_dir=None):
     representatives_lineage = representatives_info[lineage_cols]
     representatives_lineage.to_csv(
             resource('refseq_representative_genomes_lineage.txt'),
-            sep='\t')
+            sep='\t', na_rep='na')
 
     representatives_ftp = representatives_info[ftp_cols]
     representatives_ftp.to_csv(resource('refseq_representative_genomes_ftp.txt'),
-                               sep='\t')
+                               sep='\t', na_rep='na')
 
 
 if __name__ == "__main__":
