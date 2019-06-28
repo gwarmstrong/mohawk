@@ -108,8 +108,8 @@ class SmallConvNet(BaseModel):
         if gpu:
             self.to('cuda')
 
-        # give hint to where model is being trained (see if moved to gpu)
-        print("Training on: {}".format(self.fc1.weight.device()))
+        # give hint to where model is being trained (see if moved to gpu))
+        print("Training on: {}".format(self.fc1.weight.device))
 
         for index_epoch in range(epochs):
             loss_epoch = 0
