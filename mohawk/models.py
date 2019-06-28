@@ -105,11 +105,12 @@ class SmallConvNet(BaseModel):
 
         optimizer = self.optim(self.parameters(), lr=0.0001, weight_decay=0)
 
-        if gpu:
-            self.to('cuda')
+        device = torch.device('cuda' if gpu else 'cpu')
+        # self.to(device)
 
         # give hint to where model is being trained (see if moved to gpu))
         print("Training on: {}".format(self.fc1.weight.device))
+        # device = self.fc1.weight.device
 
         for index_epoch in range(epochs):
             loss_epoch = 0
@@ -117,13 +118,11 @@ class SmallConvNet(BaseModel):
                 # print(data['read'])
                 # print(data['read'].shape)
                 x = data['read']
-                if gpu:
-                    x.to('cuda')
+                x.to(device)
                 y_pred = self.forward(x)
                 # loss on data['label']
                 y = data['label']
-                if gpu:
-                    y.to('cuda')
+                y.to(device)
                 loss = self.loss_fn(y_pred, y)
                 loss_epoch += loss.item()
                 optimizer.zero_grad()

@@ -61,7 +61,9 @@ def trainer(model: nn.Module,
     # conv1d complains if there are float's instead of doubles <- could slow
     # down training
     training_model.double()
-    # TODO call model.cuda() here
+    # TODO call model.cuda() here maybe?
+    if train_kwargs['gpu']:
+        model.cuda()
 
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
