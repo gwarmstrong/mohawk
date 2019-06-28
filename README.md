@@ -6,6 +6,8 @@ let's take a bunch of letters and use them to make numbers, then see if we can u
 ```bash
 conda env create -n mohawk -f resources/environment.yml
 conda activate mohawk
+pip install -e .
+
 ```
 
 
@@ -31,7 +33,7 @@ conda activate mohawk
 
 [x] write script for generating ftp_link/taxon files
 
-[ ] start writing models
+[x] start writing models
 
 ~~[ ] make data_downloader object oriented?~~
 
@@ -56,4 +58,6 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 [ ] inject level labels into names, i.e., 'g_Staphylococcus', 'f_...', etc
 
-[ ] more thoroughly document requirements
+[x] more thoroughly document requirements
+
+[ ] save output model
