@@ -42,7 +42,7 @@ class BaseModel(nn.Module):
         total_present = 0
         for data in dataloader:
             x = data['read']
-            y_pred = self.forward(x)
+            y_pred = self(x)
             y_pred_class = y_pred.argmax(1)
             correct = torch.eq(data['label'], y_pred_class)
             total_correct += correct.sum()
@@ -55,7 +55,7 @@ class BaseModel(nn.Module):
         total_samples = 0
         for data in dataloader:
             x = data['read']
-            y_pred = self.forward(x)
+            y_pred = self(x)
             y = data['label']
             loss = self.loss_fn(y_pred, y)
             total_loss += loss.item()
@@ -119,7 +119,7 @@ class SmallConvNet(BaseModel):
                 # print(data['read'].shape)
                 x = data['read']
                 x.to(device)
-                y_pred = self.forward(x)
+                y_pred = self(x)
                 # loss on data['label']
                 y = data['label']
                 y.to(device)

@@ -63,7 +63,7 @@ def trainer(model: nn.Module,
     training_model.double()
     # TODO call model.cuda() here maybe?
     if train_kwargs['gpu']:
-        model.cuda()
+        training_model.cuda()
 
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
