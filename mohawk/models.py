@@ -118,11 +118,11 @@ class SmallConvNet(BaseModel):
                 # print(data['read'])
                 # print(data['read'].shape)
                 x = data['read']
-                x.to(device)
+                x = x.to(device)
                 y_pred = self(x)
                 # loss on data['label']
                 y = data['label']
-                y.to(device)
+                y = y.to(device)
                 loss = self.loss_fn(y_pred, y)
                 loss_epoch += loss.item()
                 optimizer.zero_grad()
