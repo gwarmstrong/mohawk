@@ -18,6 +18,9 @@ def trainer(model: nn.Module,
             data_directory: Optional[str] = None,
             summary_directory: Optional[str] = None,
             random_seed: Optional[int] = None,
+            external_validation_ids: Optional[List[str]] = None,
+            n_external_validation_reads: Optional[int] = None,
+            external_validation_distribution: Optional[List[float]] = None,
             model_kwargs: Optional[dict] = dict(),
             train_kwargs: Optional[dict] = dict(),
             summary_kwargs: Optional[dict] = dict()):
@@ -30,7 +33,36 @@ def trainer(model: nn.Module,
                                        length, channel, data_directory,
                                        random_seed)
 
+    if external_validation_ids is not None and \
+            n_external_validation_reads is not None and \
+            external_validation_distribution is not None:
+        data_downloader(external_validation_ids,
+                        genomes_directory=data_directory,
+                        channel=channel)
+        external_reads, external_ids = simulate_from_genomes(
+            external_validation_ids,
+            external_validation_distribution,
+            n_external_validation_reads,
+            length,
+            channel,  # presumably should be available in the same channel
+            data_directory,
+            random_seed + 5
+            )
+    elif external_validation_ids is not None or \
+            n_external_validation_reads is not None or \
+            external_validation_distribution is not None:
+        raise ValueError('If any external validation parameters are '
+                         'specified, all must be specified.')
+    else:
+        external_reads = None
+        external_ids = None
+
     classes = id_to_lineage(ids, level, channel)
+
+    if external_ids is not None:
+        external_classes = id_to_lineage(external_ids, level, channel)
+    else:
+        external_classes = None
 
     # TODO is classes ohe actually necessary?
     # classes_enc, encoder = encode_classes(classes)
@@ -47,11 +79,31 @@ def trainer(model: nn.Module,
     val_components = prep_reads_classes_ids(reads, classes, ids,
                                             val_indices)
 
+    if external_classes is not None:
+        external_components = external_reads, external_classes, external_ids
+                              # prep_reads_classes_ids(external_reads,
+                              #                        external_classes,
+                              #                        external_ids)
+    else:
+        external_components = None
+
     train_dataset = SequenceDataset(*train_components)
     val_dataset = SequenceDataset(*val_components)
 
+    if external_components is not None:
+        external_dataset = SequenceDataset(*external_components)
+    else:
+        external_dataset = None
+
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=True)
+
+    if external_dataset is not None:
+        external_dataloader = DataLoader(external_dataset,
+                                         batch_size=64,
+                                         shuffle=True)
+    else:
+        external_dataloader = None
 
     training_model = model(length=length,
                            n_classes=len(set(classes)),
@@ -67,6 +119,7 @@ def trainer(model: nn.Module,
 
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
+                       external_dataset=external_dataloader,
                        seed=random_seed,
                        log_dir=summary_directory,
                        summary_kwargs=summary_kwargs,
@@ -84,6 +137,7 @@ def trainer(model: nn.Module,
 
 
 def prep_reads_classes_ids(reads, classes, ids, indices):
+    # if indices are not specified, keep everything
     sub_reads = reads[indices]
     classes_array = np.array(classes)
     sub_classes = classes_array[indices]
