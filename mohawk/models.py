@@ -159,6 +159,7 @@ class SmallConvNet(BaseModel):
     def fit(self,
             train_dataset: DataLoader,
             val_dataset: Optional[DataLoader],
+            external_dataset: Optional[DataLoader],
             seed: Optional[int],
             log_dir: Optional[str],
             epochs: int = 1000,
@@ -199,6 +200,7 @@ class SmallConvNet(BaseModel):
                                counter=index_epoch,
                                train_dataset=train_dataset,
                                val_dataset=val_dataset,
+                               external_dataset=external_dataset,
                                **summary_kwargs)
 
         writer.close()
@@ -208,52 +210,72 @@ class SmallConvNet(BaseModel):
                   counter=0,
                   train_dataset=None,
                   val_dataset=None,
+                  external_dataset=None,
                   classify_threshold=None):
 
         train_accuracy = self.accuracy(train_dataset)
         val_accuracy = self.accuracy(val_dataset)
+        accuracy_dict = {'train': train_accuracy,
+                         'val': val_accuracy}
+        if external_dataset is not None:
+            external_accuracy = self.accuracy(external_dataset)
+            accuracy_dict.update({'ext': external_accuracy})
         writer.add_scalars('accuracy-global',
-                           {'train': train_accuracy,
-                            'val': val_accuracy},
+                           accuracy_dict,
                            counter)
 
         # only add if threshold is specified
-        print('Classify threshold: {}'.format(classify_threshold))
         if classify_threshold is not None:
             train_accuracy_thresh = self.accuracy(train_dataset,
                                                   cutoff=classify_threshold)
             val_accuracy_thresh = self.accuracy(val_dataset,
                                                 cutoff=classify_threshold)
+            accuracy_thresh_dict = {'train': train_accuracy_thresh,
+                                    'val': val_accuracy_thresh}
+            if external_dataset is not None:
+                external_accuracy_thresh = self.accuracy(external_dataset,
+                                                         cutoff=
+                                                         classify_threshold)
+                accuracy_thresh_dict.update({'ext': external_accuracy_thresh})
             writer.add_scalars('accuracy-threshold_{}'.format(
                                 classify_threshold),
-                               {'train': train_accuracy_thresh,
-                                'val': val_accuracy_thresh},
+                               accuracy_thresh_dict,
                                counter)
 
         train_avg_loss = self.avg_loss(train_dataset)
         val_avg_loss = self.avg_loss(val_dataset)
+        avg_loss_dict = {'train': train_avg_loss,
+                         'val': val_avg_loss}
+        if external_dataset is not None:
+            external_avg_loss = self.avg_loss(external_dataset)
+            avg_loss_dict.update({'ext': external_avg_loss})
         writer.add_scalars('loss',
-                           {'train': train_avg_loss,
-                            'val': val_avg_loss},
+                           avg_loss_dict,
                            counter)
 
         train_f1 = self.f1_score_(train_dataset, average='weighted')
         val_f1 = self.f1_score_(val_dataset, average='weighted')
+        f1_dict = {'train': train_f1,
+                   'val': val_f1}
+        if external_dataset is not None:
+            external_f1 = self.f1_score_(external_dataset, average='weighted')
+            f1_dict.update({'ext': external_f1})
         writer.add_scalars('f1_score',
-                           {'train': train_f1,
-                            'val': val_f1},
+                           f1_dict,
                            counter)
 
         train_max_softmax = self.max_softmax(train_dataset)
         val_max_softmax = self.max_softmax(val_dataset)
+        if external_dataset is not None:
+            external_max_softmax = self.max_softmax(external_dataset)
         train_max_softmax_correct, train_max_softmax_incorrect = \
             self.max_softmax(train_dataset, split=True)
         val_max_softmax_correct, val_max_softmax_incorrect = \
             self.max_softmax(val_dataset, split=True)
-        # writer.add_histogram('max_softmax',
-        #                      {'train': train_max_softmax,
-        #                       'val': val_max_softmax},
-        #                      counter)
+        if external_dataset is not None:
+            external_max_softmax_correct, external_max_softmax_incorrect = \
+                self.max_softmax(external_dataset, split=True)
+
         writer.add_histogram('max_softmax/train/all', train_max_softmax,
                              counter)
         writer.add_histogram('max_softmax/val/all', val_max_softmax, counter)
@@ -277,10 +299,25 @@ class SmallConvNet(BaseModel):
             writer.add_histogram('max_softmax/val/incorrect',
                                  val_max_softmax_incorrect,
                                  counter)
+        # only plot if external dataset exists
+        if external_dataset is not None:
+            writer.add_histogram('max_softmax/ext/all', external_max_softmax,
+                                 counter)
+            if len(external_max_softmax_correct) > 0:
+                writer.add_histogram('max_softmax/ext/correct',
+                                     external_max_softmax_correct,
+                                     counter)
+            if len(external_max_softmax_incorrect) > 0:
+                writer.add_histogram('max_softmax/ext/incorrect',
+                                     external_max_softmax_incorrect,
+                                     counter)
         print("IT: {}, Train ACC: {}".format(counter,
                                              train_accuracy))
         print("IT: {}, Val ACC: {}".format(counter,
                                            val_accuracy))
+        if external_dataset is not None:
+            print("IT: {}, Ext ACC: {}".format(counter,
+                                               external_accuracy))
 
     def forward(self, data):
 
