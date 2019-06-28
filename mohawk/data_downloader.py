@@ -4,15 +4,36 @@ import shutil
 import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
-from pkg_resources import resource_stream
+from pkg_resources import resource_stream, resource_exists
 from mohawk.utils import _ftp_path, get_fna_name, gz_stripper
 
-representative_genomes_file = resource_stream(
-        'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
-        )
+# representative_genomes_file = resource_stream(
+#         'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
+#         )
+#
+# complete_genomes_file = resource_stream(
+#     'mohawk.resources', 'refseq_complete_genomes_ftp.txt')
 
-complete_genomes_file = resource_stream(
-        'mohawk.resources', 'refseq_complete_genomes_ftp.txt')
+
+def representative_genomes_file():
+    if resource_exists('mohawk.resources',
+                       'refseq_representative_genomes_ftp.txt'):
+
+        return resource_stream(
+            'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
+            )
+    else:
+        raise IOError('Unable to find package resources.')
+
+
+def complete_genomes_file():
+    if resource_exists('mohawk.resources',
+                       'refseq_complete_genomes_ftp.txt'):
+        return resource_stream(
+            'mohawk.resources', 'refseq_complete_genomes_ftp.txt'
+        )
+    else:
+        raise IOError('Unable to find package resources.')
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
@@ -173,10 +194,10 @@ def data_downloader(genome_ids: List[str],
                     channel: Optional[str] = 'representative') -> List[str]:
 
     if channel == 'representative':
-        genomes_metadata = pd.read_csv(representative_genomes_file,
+        genomes_metadata = pd.read_csv(representative_genomes_file(),
                                        sep='\t', index_col=0)
     elif channel == 'complete':
-        genomes_metadata = pd.read_csv(complete_genomes_file, sep='\t',
+        genomes_metadata = pd.read_csv(complete_genomes_file(), sep='\t',
                                        index_col=0)
     else:
         raise ValueError("Invalid choice for `channel`. Options are "
