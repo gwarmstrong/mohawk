@@ -6,6 +6,8 @@ from torch.optim import Adam
 from torch.nn import MSELoss, CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
 from typing import Optional
+from sklearn.metrics import f1_score
+import numpy as np
 
 
 class BaseModel(nn.Module):
@@ -36,35 +38,95 @@ class BaseModel(nn.Module):
             **kwargs):
         pass
 
-    def accuracy(self, dataloader):
+    def forward_step(self, data):
+        x = data['read']
+        x = x.to(self.device)
+        y_pred = self(x)
+        y = data['label']
+        y = y.to(self.device)
+        return x, y, y_pred
+
+    def backward_step(self, y, y_pred, optimizer):
+        loss = self.loss_fn(y_pred, y)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        return loss
+
+    def accuracy(self, dataloader, cutoff=0.):
         # make sure to zero grad after running ? -> do we need to?
         total_correct = 0
         total_present = 0
         for data in dataloader:
-            x = data['read']
-            x = x.to(self.device)
-            y_pred = self(x)
-            y_pred_class = y_pred.argmax(1)
-            y = data['label'].to(self.device)
-            correct = torch.eq(y, y_pred_class)
-            total_correct += correct.sum()
-            total_present += len(correct)
+            _, y, y_pred = self.forward_step(data)
+            y_pred_max = y_pred.max(1)
+            y_pred_class = y_pred_max.indices
+            y_pred_max_val = y_pred_max.values
+            over_cutoff = y_pred_max_val > cutoff
+            correct = torch.eq(y, y_pred_class) & over_cutoff
+            total_correct += correct.sum().item()
+            total_present += over_cutoff.sum().item()
 
-        return total_correct.item() / total_present
+        # correct for no predictions made
+        if total_present == 0:
+            total_present = 1
+
+        return total_correct / total_present
 
     def avg_loss(self, dataloader):
         total_loss = 0
         total_samples = 0
         for data in dataloader:
-            x = data['read']
-            x = x.to(self.device)
-            y_pred = self(x)
-            y = data['label'].to(self.device)
+            _, y, y_pred = self.forward_step(data)
+            # use this and not backward step so weights are not updated
             loss = self.loss_fn(y_pred, y)
             total_loss += loss.item()
             total_samples += len(y)
 
         return total_loss / total_samples
+
+    def f1_score_(self, dataloader, average=None):
+        all_class_predictions = []
+        all_class_labels = []
+        for data in dataloader:
+            _, y, y_pred = self.forward_step(data)
+            y_pred_class = y_pred.argmax(1)
+            all_class_predictions.append(y_pred_class.cpu())
+            all_class_labels.append(y)
+
+        predictions = torch.cat(all_class_predictions, 0).cpu()
+        labels = torch.cat(all_class_labels, 0).cpu()
+
+        return f1_score(labels, predictions, average=average)
+
+    def max_softmax(self, dataloader, split=False):
+        all_max_preds = []
+        all_is_correct = []  # TODO rename
+        max_pred_class = []
+        for data in dataloader:
+            _, y, y_pred = self.forward_step(data)
+            y_pred_max = y_pred.max(1)
+            all_max_preds.append(y_pred_max.values)
+            if split:
+                max_pred_class.append(y_pred_max.indices)
+                all_is_correct.append(y)
+
+        max_preds = torch.cat(all_max_preds, 0)
+        if split:
+            max_class = torch.cat(max_pred_class, 0)
+            correct_class = torch.cat(all_is_correct, 0)
+
+            # 1 if match, 0 otherwise
+            correct = torch.eq(max_class, correct_class)
+
+            correct = correct.cpu().detach().numpy()
+            max_preds = max_preds.cpu().detach().numpy()
+            correct_max = max_preds[np.where(correct == 1)]
+            incorrect_max = max_preds[np.where(correct == 0)]
+            return correct_max, incorrect_max
+
+        else:
+            return max_preds
 
 
 class SmallConvNet(BaseModel):
@@ -92,15 +154,19 @@ class SmallConvNet(BaseModel):
         self.softmax = nn.Softmax(dim=1)
         self.optim = Adam
         self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.device = None
 
     def fit(self,
             train_dataset: DataLoader,
             val_dataset: Optional[DataLoader],
             seed: Optional[int],
             log_dir: Optional[str],
-            epochs: int = 10000,
+            epochs: int = 1000,
+            summary_interval: int = 10,
             gpu: bool = False,
+            summary_kwargs: Optional[dict] = dict(),
             **kwargs):
+
         if seed is not None:
             torch.manual_seed(seed+3)
 
@@ -111,32 +177,29 @@ class SmallConvNet(BaseModel):
         self.device = torch.device('cuda' if gpu else 'cpu')
         # self.to(device)
 
+        # put computational graph in tensorboard TODO declutter
+        for batch_index, data in enumerate(train_dataset):
+            if batch_index == 0:
+                writer.add_graph(self,
+                                 input_to_model=data['read'].to(self.device)
+                                 )
+
         # give hint to where model is being trained (see if moved to gpu))
         print("Training on: {}".format(self.fc1.weight.device))
-        print("Conv1 device: {}".format(self.conv1.weight.device))
         # device = self.fc1.weight.device
 
-        for index_epoch in range(epochs):
-            loss_epoch = 0
+        # run for an extra epoch to hit a multiple of 10 # TODO should go?
+        for index_epoch in range(epochs + 1):
             for data in train_dataset:
-                # print(data['read'])
-                # print(data['read'].shape)
-                x = data['read']
-                x = x.to(self.device)
-                y_pred = self(x)
-                # loss on data['label']
-                y = data['label']
-                y = y.to(self.device)
-                loss = self.loss_fn(y_pred, y)
-                loss_epoch += loss.item()
-                optimizer.zero_grad()
-                # loss.backward()
-                loss.backward()
-                # other maintenance
-                optimizer.step()
+                _, y, y_pred = self.forward_step(data)
+                self.backward_step(y, y_pred, optimizer)
 
-            if index_epoch % 10 == 0:
-                self.summarize(writer, index_epoch, train_dataset, val_dataset)
+            if index_epoch % summary_interval == 0:
+                self.summarize(writer,
+                               counter=index_epoch,
+                               train_dataset=train_dataset,
+                               val_dataset=val_dataset,
+                               **summary_kwargs)
 
         writer.close()
 
@@ -144,14 +207,28 @@ class SmallConvNet(BaseModel):
                   writer,
                   counter=0,
                   train_dataset=None,
-                  val_dataset=None):
+                  val_dataset=None,
+                  classify_threshold=None):
 
         train_accuracy = self.accuracy(train_dataset)
         val_accuracy = self.accuracy(val_dataset)
-        writer.add_scalars('accuracy',
+        writer.add_scalars('accuracy-global',
                            {'train': train_accuracy,
                             'val': val_accuracy},
                            counter)
+
+        # only add if threshold is specified
+        print('Classify threshold: {}'.format(classify_threshold))
+        if classify_threshold is not None:
+            train_accuracy_thresh = self.accuracy(train_dataset,
+                                                  cutoff=classify_threshold)
+            val_accuracy_thresh = self.accuracy(val_dataset,
+                                                cutoff=classify_threshold)
+            writer.add_scalars('accuracy-threshold_{}'.format(
+                                classify_threshold),
+                               {'train': train_accuracy_thresh,
+                                'val': val_accuracy_thresh},
+                               counter)
 
         train_avg_loss = self.avg_loss(train_dataset)
         val_avg_loss = self.avg_loss(val_dataset)
@@ -159,7 +236,47 @@ class SmallConvNet(BaseModel):
                            {'train': train_avg_loss,
                             'val': val_avg_loss},
                            counter)
-        # writer.add_scalar('val_accuracy', val_accuracy, counter)
+
+        train_f1 = self.f1_score_(train_dataset, average='weighted')
+        val_f1 = self.f1_score_(val_dataset, average='weighted')
+        writer.add_scalars('f1_score',
+                           {'train': train_f1,
+                            'val': val_f1},
+                           counter)
+
+        train_max_softmax = self.max_softmax(train_dataset)
+        val_max_softmax = self.max_softmax(val_dataset)
+        train_max_softmax_correct, train_max_softmax_incorrect = \
+            self.max_softmax(train_dataset, split=True)
+        val_max_softmax_correct, val_max_softmax_incorrect = \
+            self.max_softmax(val_dataset, split=True)
+        # writer.add_histogram('max_softmax',
+        #                      {'train': train_max_softmax,
+        #                       'val': val_max_softmax},
+        #                      counter)
+        writer.add_histogram('max_softmax/train/all', train_max_softmax,
+                             counter)
+        writer.add_histogram('max_softmax/val/all', val_max_softmax, counter)
+
+        # only plot if the quantity has entries
+        if len(train_max_softmax_correct) > 0:
+            writer.add_histogram('max_softmax/train/correct',
+                                 train_max_softmax_correct,
+                                 counter)
+        if len(train_max_softmax_incorrect) > 0:
+            writer.add_histogram('max_softmax/train/incorrect',
+                                 train_max_softmax_incorrect,
+                                 counter)
+
+        writer.add_histogram('max_softmax/val/all', val_max_softmax, counter)
+        if len(val_max_softmax_correct) > 0:
+            writer.add_histogram('max_softmax/val/correct',
+                                 val_max_softmax_correct,
+                                 counter)
+        if len(val_max_softmax_incorrect) > 0:
+            writer.add_histogram('max_softmax/val/incorrect',
+                                 val_max_softmax_incorrect,
+                                 counter)
         print("IT: {}, Train ACC: {}".format(counter,
                                              train_accuracy))
         print("IT: {}, Val ACC: {}".format(counter,
@@ -184,7 +301,4 @@ class SmallConvNet(BaseModel):
         x = self.softmax(x)
 
         return x
-
-
-
 
