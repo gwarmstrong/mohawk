@@ -110,6 +110,7 @@ class SmallConvNet(BaseModel):
 
         # give hint to where model is being trained (see if moved to gpu))
         print("Training on: {}".format(self.fc1.weight.device))
+        print("Conv1 device: {}".format(self.conv1.weight.device))
         # device = self.fc1.weight.device
 
         for index_epoch in range(epochs):
