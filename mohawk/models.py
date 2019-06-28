@@ -96,6 +96,7 @@ class SmallConvNet(BaseModel):
             seed: Optional[int],
             log_dir: Optional[str],
             epochs: int = 10000,
+            gpu: bool = False,
             **kwargs):
         if seed is not None:
             torch.manual_seed(seed+3)
@@ -103,6 +104,13 @@ class SmallConvNet(BaseModel):
         writer = SummaryWriter(log_dir=log_dir)
 
         optimizer = self.optim(self.parameters(), lr=0.0001, weight_decay=0)
+
+        if gpu:
+            self.to('cuda')
+
+        # give hint to where model is being trained (see if moved to gpu)
+        print("Training on: {}".format(self.fc1.weight.type()))
+
         for index_epoch in range(epochs):
             loss_epoch = 0
             for data in train_dataset:
