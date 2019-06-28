@@ -8,11 +8,16 @@ trial_ids = ['GCF_900128725.1', 'GCF_000590475.1', 'GCF_000953655.1',
              'GCF_001558415.2', 'GCF_002209165.2', 'GCF_001999985.1']
 trial_directory = '../data/trial_download'
 distribution = [1/6]*6
-total_reads = 100
-length = 15
+total_reads = 100000
+length = 150
 train_ratio = 0.8
+seed = 1234
 
-train_kwargs = {'gpu': torch.cuda.is_available()}
+train_kwargs = {'gpu': torch.cuda.is_available(),
+                'summary_interval': 1,
+                'epochs': 500
+               }
+summary_kwargs = {'classify_threshold': 0.25}
 print("CUDA available: {}".format(train_kwargs['gpu']))
 
 # file_paths = data_downloader(trial_ids, genomes_directory=trial_directory)
@@ -24,6 +29,7 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 # print(reads[-5:], classes[-5:])
 
 model = trainer(SmallConvNet, trial_ids, distribution, total_reads, length,
-                train_ratio, data_directory=trial_directory, random_seed=1234,
-                train_kwargs=train_kwargs)
+                train_ratio, data_directory=trial_directory, random_seed=seed,
+                train_kwargs=train_kwargs,
+                summary_kwargs=summary_kwargs)
 print(model)
