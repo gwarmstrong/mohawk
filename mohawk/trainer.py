@@ -1,7 +1,7 @@
 import numpy as np
 from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes, id_to_lineage
-from mohawk.dataset import SequenceDataset, encode_classes
+from mohawk.dataset import SequenceDataset, encode_classes # TODO should go?
 from typing import Optional, List
 from torch import nn
 from torch.utils.data import DataLoader
@@ -69,12 +69,16 @@ def trainer(model: nn.Module,
                        val_dataset=val_dataloader,
                        seed=random_seed,
                        log_dir=summary_directory,
+                       summary_kwargs=summary_kwargs,
                        **train_kwargs)
 
     # write out final model and some summary information
     # TODO have a seperate directory for finished model
     # TODO as well as prefix/suffix option for naming
-    training_model.summarize(summary_directory, **summary_kwargs)
+    # training_model.summarize(summary_directory,
+    #                          train_dataset=train_dataset,
+    #                          val_dataset=val_dataset,
+    #                          **summary_kwargs)
 
     return training_model
 
