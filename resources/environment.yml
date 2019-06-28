@@ -5,7 +5,6 @@ channels:
   - defaults
   - bioconda
 dependencies:
-  - appnope=0.1.0
   - argtable2=2.13=0
   - asn1crypto=0.24.0
   - backcall=0.1.0
@@ -36,22 +35,17 @@ dependencies:
   - jpeg=9b
   - kalign=2.03
   - kiwisolver=1.1.0
-  - libcxx=4.0.1
-  - libcxxabi=4.0.1
   - libffi=3.2.1=1
-  - libgcc=4.8.5
-  - libgfortran=3.0.1
   - libiconv=1.15
   - libpng=1.6.37
   - libtiff=4.0.10
   - libxml2=2.9.4=0
   - libxslt=1.1.29=0
-  - llvm-openmp=4.0.1
   - lockfile=0.12.2
   - lxml=4.1.1
   - mafft=6.861
   - matplotlib=2.2.2
-  - mkl=2019.4=233
+  - mkl=2019.4
   - mkl-service=2.0.2
   - mkl_fft=1.0.12
   - mkl_random=1.0.2
