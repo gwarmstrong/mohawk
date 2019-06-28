@@ -117,9 +117,13 @@ class SmallConvNet(BaseModel):
                 # print(data['read'])
                 # print(data['read'].shape)
                 x = data['read']
+                if gpu:
+                    x.device('cuda')
                 y_pred = self.forward(x)
                 # loss on data['label']
                 y = data['label']
+                if gpu:
+                    y.to('cuda')
                 loss = self.loss_fn(y_pred, y)
                 loss_epoch += loss.item()
                 optimizer.zero_grad()
