@@ -1,6 +1,14 @@
 # mohawk
 let's take a bunch of letters and use them to make numbers, then see if we can use numbers to make letters
 
+## Environment Setup
+
+```bash
+conda env create -n mohawk -f resources/environment.yml
+conda activate mohawk
+```
+
+
 ## TODO
 
 [x] split taxonomy_slim into two files
@@ -47,3 +55,5 @@ that indicates it is getting data from ncbi, not _generating_ it
 [ ] functionality for saving and reading args files -> and building models from these
 
 [ ] inject level labels into names, i.e., 'g_Staphylococcus', 'f_...', etc
+
+[ ] more thoroughly document requirements
