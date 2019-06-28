@@ -45,7 +45,8 @@ class BaseModel(nn.Module):
             x = x.to(self.device)
             y_pred = self(x)
             y_pred_class = y_pred.argmax(1)
-            correct = torch.eq(data['label'], y_pred_class)
+            y = data['label'].to(self.device)
+            correct = torch.eq(y, y_pred_class)
             total_correct += correct.sum()
             total_present += len(correct)
 
@@ -58,7 +59,7 @@ class BaseModel(nn.Module):
             x = data['read']
             x = x.to(self.device)
             y_pred = self(x)
-            y = data['label']
+            y = data['label'].to(self.device)
             loss = self.loss_fn(y_pred, y)
             total_loss += loss.item()
             total_samples += len(y)
