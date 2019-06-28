@@ -71,10 +71,16 @@ that indicates it is getting data from ncbi, not _generating_ it
     
     [ ] split by right and wrong?
     
-[ ] figure out how I should pass in validation clades
+[x] figure out how I should pass in validation clades
 
 [x] fix TypeError at end of iteration -> caused by summarize call outside in `trainer.py`
 
 [ ] check seeding, seems slightly off, could be related to conv1d?
 
 [ ] custom tensorboard plot for % reads classified and portion classified for each class
+
+[ ] get unit test ideas from rhapsody
+
+[ ] incorporating data from CAMI-sim
+
+[ ] make external validation more elegant
