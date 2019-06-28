@@ -9,6 +9,7 @@ conda activate mohawk
 pip install -e .
 
 ```
+may also need to install `caffe2`
 
 
 ## TODO
@@ -60,4 +61,20 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 [x] more thoroughly document requirements
 
-[ ] save output model
+[ ] save output model(s)?
+
+[x] Evaluate with F1 Score
+
+[x] Visualize computational graph
+
+[x] show softmax histogram
+    
+    [ ] split by right and wrong?
+    
+[ ] figure out how I should pass in validation clades
+
+[x] fix TypeError at end of iteration -> caused by summarize call outside in `trainer.py`
+
+[ ] check seeding, seems slightly off, could be related to conv1d?
+
+[ ] custom tensorboard plot for % reads classified and portion classified for each class
