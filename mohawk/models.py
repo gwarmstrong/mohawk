@@ -42,6 +42,7 @@ class BaseModel(nn.Module):
         total_present = 0
         for data in dataloader:
             x = data['read']
+            x = x.to(self.device)
             y_pred = self(x)
             y_pred_class = y_pred.argmax(1)
             correct = torch.eq(data['label'], y_pred_class)
@@ -55,6 +56,7 @@ class BaseModel(nn.Module):
         total_samples = 0
         for data in dataloader:
             x = data['read']
+            x = x.to(self.device)
             y_pred = self(x)
             y = data['label']
             loss = self.loss_fn(y_pred, y)
@@ -105,7 +107,7 @@ class SmallConvNet(BaseModel):
 
         optimizer = self.optim(self.parameters(), lr=0.0001, weight_decay=0)
 
-        device = torch.device('cuda' if gpu else 'cpu')
+        self.device = torch.device('cuda' if gpu else 'cpu')
         # self.to(device)
 
         # give hint to where model is being trained (see if moved to gpu))
@@ -119,11 +121,11 @@ class SmallConvNet(BaseModel):
                 # print(data['read'])
                 # print(data['read'].shape)
                 x = data['read']
-                x = x.to(device)
+                x = x.to(self.device)
                 y_pred = self(x)
                 # loss on data['label']
                 y = data['label']
-                y = y.to(device)
+                y = y.to(self.device)
                 loss = self.loss_fn(y_pred, y)
                 loss_epoch += loss.item()
                 optimizer.zero_grad()
