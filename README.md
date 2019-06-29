@@ -36,14 +36,52 @@ may also need to install `caffe2`
 
 - [x] start writing models
 
-- ~~[ ] make data_downloader object oriented?~~
+- [ ] ~~make data_downloader object oriented?~~
 
 - [ ] more/better unit testing
 
     - [ ] trial generation should be transitioned into a unit test
-    
+   
     Files:  
-    - [ ]
+    First pass 
+    
+    - [x] data_downloader.py
+    
+    - [ ] dataset.py
+    
+    - [ ] models.py
+    
+    - [ ] setup_genome_downloads.py (needs major [re]structuring)
+    
+    - [ ] simulation.py
+    
+    - [ ] trainer.py
+    
+    - [ ] utils.py
+    
+- [ ] more docs
+
+    Files:  
+    
+    - [x] data_downloader.py
+    
+    - [ ] dataset.py
+    
+    - [ ] models.py
+    
+    - [ ] setup_genome_downloads.py (needs major [re]structuring)
+    
+    - [ ] simulation.py
+    
+    - [ ] trainer.py
+    
+    - [ ] utils.py
+    
+- [ ] [re]structuring setup_genome_downloads.py
+    
+- [ ] transition trial.py into `click`-based CLI
+
+- [ ] at least move both (all 4) resource loaders into their own file
 
 - [x] consider renaming data_generator to something else: like data_downloader
 that indicates it is getting data from ncbi, not _generating_ it
@@ -72,7 +110,7 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 - [x] show softmax histogram
     
-    - [ ] split by right and wrong?
+    - [x] split by right and wrong?
     
 - [x] figure out how I should pass in validation clades
 
