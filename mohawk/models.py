@@ -21,11 +21,8 @@ class BaseModel(nn.Module):
         pass
 
     def summarize(self, writer, **kwargs):
-        # TODO train and test accuracies
-        # maybe save predictions?
-        # definitely save trained model
-        # TODO tensorboard logs?
-        # from torch.utils import tensorboard
+        # TODO maybe save predictions?
+        # TODO definitely save trained model
         pass
 
     # might need to separate fit's kwargs from trainer's kwargs

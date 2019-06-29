@@ -42,9 +42,9 @@ class SequenceDataset(Dataset):
 
 
 def encode_classes(classes):
-    encoder = LabelEncoder()  # OneHotEncoder()
+    encoder = LabelEncoder()
     new_classes = np.array(classes).reshape(-1, 1).ravel()
     new_classes = encoder.fit_transform(new_classes)
 
-    return new_classes, encoder #new_classes.todense(), encoder
+    return new_classes, encoder
 

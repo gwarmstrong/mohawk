@@ -81,9 +81,6 @@ def trainer(model: nn.Module,
 
     if external_classes is not None:
         external_components = external_reads, external_classes, external_ids
-                              # prep_reads_classes_ids(external_reads,
-                              #                        external_classes,
-                              #                        external_ids)
     else:
         external_components = None
 
