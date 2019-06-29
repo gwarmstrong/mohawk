@@ -48,7 +48,8 @@ validation_ids = [
 # in validation id's (make sure to exclude strain)
 
 trial_directory = '../data/trial_download'
-distribution = [1/6]*6
+n_samples = len(trial_ids)
+distribution = [1/n_samples] * n_samples
 total_reads = 200000 * 15
 length = 150
 train_ratio = 0.8
@@ -62,7 +63,7 @@ external_validation_params = {
 
 train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
-                'epochs': 500
+                'epochs': 1000
                }
 summary_kwargs = {'classify_threshold': 0.25}
 print("CUDA available: {}".format(train_kwargs['gpu']))
