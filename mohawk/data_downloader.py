@@ -6,16 +6,26 @@ from ftplib import FTP
 from typing import List, Optional
 from pkg_resources import resource_stream, resource_exists
 from mohawk.utils import _ftp_path, get_fna_name, gz_stripper
-
-# representative_genomes_file = resource_stream(
-#         'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
-#         )
-#
-# complete_genomes_file = resource_stream(
-#     'mohawk.resources', 'refseq_complete_genomes_ftp.txt')
+from io import BufferedReader
 
 
-def representative_genomes_file():
+def representative_genomes_file() -> BufferedReader:
+    """Returns a buffer containing ftp links to RefSeq
+
+    Returns
+    -------
+
+    BufferedReader
+        Contains the ftp links to the 'Representative' RefSeq genomes
+
+
+    Raises
+    ------
+
+    IOError
+        If unable to find the resource
+
+    """
     if resource_exists('mohawk.resources',
                        'refseq_representative_genomes_ftp.txt'):
 
@@ -26,7 +36,24 @@ def representative_genomes_file():
         raise IOError('Unable to find package resources.')
 
 
-def complete_genomes_file():
+def complete_genomes_file() -> BufferedReader:
+    """Returns a buffer containing ftp links to RefSeq
+
+    Returns
+    -------
+
+    BufferedReader
+        Contains the ftp links to the 'Complete' RefSeq genomes
+
+
+    Raises
+    ------
+
+    IOError
+        If unable to find the resource
+
+    """
+
     if resource_exists('mohawk.resources',
                        'refseq_complete_genomes_ftp.txt'):
         return resource_stream(
@@ -39,6 +66,9 @@ def complete_genomes_file():
 def _ncbi_ftp_downloader(id_list: List[str],
                          genomes_metadata: pd.DataFrame,
                          genomes_directory: str) -> bool:
+    """
+    Opens an FTP and downloads the genoms of all ids in `id_list`
+    """
 
     ftp = FTP('ftp.ncbi.nih.gov')
     ftp.login(user='anonymous', passwd='example@net.com')
@@ -54,6 +84,9 @@ def _ncbi_ftp_downloader(id_list: List[str],
 
 
 def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
+    """
+    unzips `gz_file` and saves the contents as `gunzipped_file`
+    """
     # see 'https://stackoverflow.com/questions/48466421/python-how-to-'
     #     'decompress-a-gzip-file-to-an-uncompressed-file-on-disk'
     with gzip.open(gz_file, 'r') as f_in, \
@@ -66,6 +99,7 @@ def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
                     genomes_directory: str) -> None:
+    """Unzips the .gz file corresponding to each id in id_list"""
 
     for id_ in id_list:
         filename = get_fna_name(id_, genomes_metadata)
@@ -90,7 +124,7 @@ def get_ftp_dir(abspath: str) -> str:
 
     Examples
     --------
-    >>> abspath = 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/900/128/'\
+    >>> abspath = 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/901/128/'\
                   '725/GCF_900128725.1_BCifornacula_v1.0'
     >>> get_ftp_dir(abspath)
     'genomes/all/GCF/900/128/725/GCF_900128725.1_BCifornacula_v1.0'
@@ -103,6 +137,33 @@ def _get_ids_not_downloaded(id_list: List[str],
                             genomes_metadata: pd.DataFrame,
                             genomes_directory: Optional[str],
                             fna_only: Optional[bool] = False) -> List[str]:
+    """Returns ID's from id_list that need to be downloaded/unzipped (do not
+    already exist in `genomes_directory`)
+
+    Parameters
+    ----------
+    id_list
+        List of Assembly accession id's being requested from
+    genomes_metadata
+        Table containing metadata containing NCBI ID's and ftp links
+    genomes_directory
+        Directory to look for and save data into to
+    fna_only
+        False if downloading, True if unzipping
+
+    Returns
+    -------
+
+    List[str]
+        Assembly accession id's that need to be downloaded from NCBI
+
+    Raises
+    ------
+
+    ValueError
+        If a supplied id is not contained in the requested metadata table
+
+    """
 
     # if fna_only, we are checking for ids to gunzip
     # else, we are checking to see if we need to download the .gz file
@@ -158,6 +219,30 @@ def _get_ids_not_downloaded(id_list: List[str],
 def _ensure_all_data(id_list: List[str],
                      genomes_metadata: pd.DataFrame,
                      genomes_directory: Optional[str]) -> List[str]:
+    """
+
+    Parameters
+    ----------
+    id_list
+        A list of assembly accession id's to ensure from NCBI
+    genomes_metadata
+        Table containing metadata containing NCBI ID's and ftp links
+    genomes_directory
+        Directory to look for and save data into to
+
+    Returns
+    -------
+
+    List[str]
+        paths to the genome for each id requested
+
+    Raises
+    ------
+
+    ValueError
+        If a supplied id is not contained in the requested metadata table
+
+    """
 
     if genomes_directory is None:
         genomes_directory = os.path.curdir()
@@ -192,6 +277,31 @@ def _ensure_all_data(id_list: List[str],
 def data_downloader(genome_ids: List[str],
                     genomes_directory: Optional[str] = None,
                     channel: Optional[str] = 'representative') -> List[str]:
+    """
+
+    Parameters
+    ----------
+    genome_ids
+        A list of assembly accession id's to ensure from NCBI
+    genomes_directory
+        Directory to look for and save data into to
+    channel
+        Choice between 'representative' and 'complete', describing criteria
+        NCBI genomes must meet to download
+
+    Returns
+    -------
+
+    List[str]
+        The filepaths to the fasta files for each id requested.
+
+    Raises
+    ------
+
+    ValueError
+        If an invalid channel is selected
+
+    """
 
     if channel == 'representative':
         genomes_metadata = pd.read_csv(representative_genomes_file(),
