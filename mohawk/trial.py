@@ -58,7 +58,8 @@ seed = 1234
 external_validation_params = {
     'external_validation_ids': validation_ids,
     'n_external_validation_reads': 200000,
-    'external_validation_distribution': distribution,
+    'external_validation_distribution': [1/6] * 6,  # TODO make safe to
+    # changes in ids
 }
 
 train_kwargs = {'gpu': torch.cuda.is_available(),
