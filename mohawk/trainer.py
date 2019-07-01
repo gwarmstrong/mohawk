@@ -1,7 +1,7 @@
 import numpy as np
 from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes, id_to_lineage
-from mohawk.dataset import SequenceDataset, encode_classes # TODO should go?
+from mohawk.dataset import SequenceDataset
 from typing import Optional, List
 from torch import nn
 from torch.utils.data import DataLoader
@@ -16,7 +16,6 @@ def trainer(model: nn.Module,
             level: Optional[str] = 'genus',
             channel: Optional[str] = 'representative',
             data_directory: Optional[str] = None,
-            summary_directory: Optional[str] = None,
             random_seed: Optional[int] = None,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
@@ -33,6 +32,11 @@ def trainer(model: nn.Module,
                                        length, channel, data_directory,
                                        random_seed)
 
+    classes = id_to_lineage(ids, level, channel)
+
+    # TODO maybe prep external validation function ?
+    external_validation = False
+    external_classes = None
     if external_validation_ids is not None and \
             n_external_validation_reads is not None and \
             external_validation_distribution is not None:
@@ -48,57 +52,35 @@ def trainer(model: nn.Module,
             data_directory,
             random_seed + 5
             )
+
+        external_validation = True
+        external_classes = id_to_lineage(external_ids, level, channel)
+
     elif external_validation_ids is not None or \
             n_external_validation_reads is not None or \
             external_validation_distribution is not None:
         raise ValueError('If any external validation parameters are '
                          'specified, all must be specified.')
-    else:
-        external_reads = None
-        external_ids = None
-
-    classes = id_to_lineage(ids, level, channel)
-
-    if external_ids is not None:
-        external_classes = id_to_lineage(external_ids, level, channel)
-    else:
-        external_classes = None
-
-    # TODO is classes ohe actually necessary?
-    # classes_enc, encoder = encode_classes(classes)
 
     # split into train and validation
-    # TODO clade exclusion validation
     num_samples = len(classes)
+    # TODO should make robust to no validation set
     train_indices, val_indices = train_val_split(num_samples, train_ratio,
                                                  random_seed=random_seed)
 
     # create Dataset and DataLoader for train and validation
-    train_components = prep_reads_classes_ids(reads, classes, ids,
-                                              train_indices)
-    val_components = prep_reads_classes_ids(reads, classes, ids,
-                                            val_indices)
-
-    if external_classes is not None:
-        external_components = external_reads, external_classes, external_ids
-    else:
-        external_components = None
-
-    train_dataset = SequenceDataset(*train_components)
-    val_dataset = SequenceDataset(*val_components)
-
-    if external_components is not None:
-        external_dataset = SequenceDataset(*external_components)
-    else:
-        external_dataset = None
-
-    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=True)
-
-    if external_dataset is not None:
-        external_dataloader = DataLoader(external_dataset,
-                                         batch_size=64,
-                                         shuffle=True)
+    train_dataloader = prep_dataloader(reads,
+                                       classes,
+                                       ids,
+                                       indices=train_indices)
+    val_dataloader = prep_dataloader(reads,
+                                     classes,
+                                     ids,
+                                     indices=val_indices)
+    if external_validation:
+        external_dataloader = prep_dataloader(external_reads,
+                                              external_classes,
+                                              external_ids)
     else:
         external_dataloader = None
 
@@ -110,30 +92,39 @@ def trainer(model: nn.Module,
     # conv1d complains if there are float's instead of doubles <- could slow
     # down training
     training_model.double()
-    # TODO call model.cuda() here maybe?
+
     if train_kwargs['gpu']:
         training_model.cuda()
 
+    # TODO have a seperate directory for finished model
+    # TODO as well as prefix/suffix option for naming
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
                        external_dataset=external_dataloader,
                        seed=random_seed,
-                       log_dir=summary_directory,
                        summary_kwargs=summary_kwargs,
                        **train_kwargs)
-
-    # write out final model and some summary information
-    # TODO have a seperate directory for finished model
-    # TODO as well as prefix/suffix option for naming
-    # training_model.summarize(summary_directory,
-    #                          train_dataset=train_dataset,
-    #                          val_dataset=val_dataset,
-    #                          **summary_kwargs)
 
     return training_model
 
 
+def prep_dataloader(reads, classes, ids, indices=None, batch_size=1,
+                    shuffle=False):
+    if indices is not None:
+        components = prep_reads_classes_ids(reads, classes, ids,
+                                            indices)
+    else:
+        components = reads, classes, ids
+
+    dataset = SequenceDataset(*components)
+
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+
+    return dataloader
+
+
 def prep_reads_classes_ids(reads, classes, ids, indices):
+    # TODO could error if indices is full/empty
     # if indices are not specified, keep everything
     sub_reads = reads[indices]
     classes_array = np.array(classes)
