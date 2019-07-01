@@ -203,13 +203,14 @@ class SmallConvNet(BaseModel):
 
         writer.close()
 
-    def summarize_alt(self,
-                      writer,
-                      counter=0,
-                      train_dataset=None,
-                      val_dataset=None,
-                      external_dataset=None,
-                      classify_threshold=None):
+    def summarize(self,
+                  writer,
+                  counter=0,
+                  average='weighted',
+                  train_dataset=None,
+                  val_dataset=None,
+                  external_dataset=None,
+                  classify_threshold=None):
 
         datasets = {'train': train_dataset,
                     'val': val_dataset,
@@ -234,6 +235,12 @@ class SmallConvNet(BaseModel):
         avg_losses = self.summary_helper(datasets, self.avg_loss)
         writer.add_scalars('loss',
                            avg_losses,
+                           counter)
+
+        f1_scores = self.summary_helper(datasets, self.f1_score_,
+                                        {'average': average})
+        writer.add_scalars('f1-score',
+                           f1_scores,
                            counter)
 
         max_softmax = self.summary_helper(datasets, self.max_softmax)
@@ -261,124 +268,9 @@ class SmallConvNet(BaseModel):
                                               acc))
 
     @staticmethod
-    def summary_helper(datasets, metric, metric_kwargs) -> dict:
+    def summary_helper(datasets, metric, metric_kwargs=dict()) -> dict:
         return {name: metric(dataset, **metric_kwargs) for name, dataset in
                 datasets.items()}
-
-    def summarize(self,
-                  writer,
-                  counter=0,
-                  train_dataset=None,
-                  val_dataset=None,
-                  external_dataset=None,
-                  classify_threshold=None):
-
-        train_accuracy = self.accuracy(train_dataset)
-        val_accuracy = self.accuracy(val_dataset)
-        accuracy_dict = {'train': train_accuracy,
-                         'val': val_accuracy}
-        if external_dataset is not None:
-            external_accuracy = self.accuracy(external_dataset)
-            accuracy_dict.update({'ext': external_accuracy})
-        writer.add_scalars('accuracy-global',
-                           accuracy_dict,
-                           counter)
-
-        # could probably replace most of this with something like:
-        # only add if threshold is specified
-        if classify_threshold is not None:
-            train_accuracy_thresh = self.accuracy(train_dataset,
-                                                  cutoff=classify_threshold)
-            val_accuracy_thresh = self.accuracy(val_dataset,
-                                                cutoff=classify_threshold)
-            accuracy_thresh_dict = {'train': train_accuracy_thresh,
-                                    'val': val_accuracy_thresh}
-            if external_dataset is not None:
-                external_accuracy_thresh = self.accuracy(external_dataset,
-                                                         cutoff=
-                                                         classify_threshold)
-                accuracy_thresh_dict.update({'ext': external_accuracy_thresh})
-            writer.add_scalars('accuracy-threshold_{}'.format(
-                                classify_threshold),
-                               accuracy_thresh_dict,
-                               counter)
-
-        train_avg_loss = self.avg_loss(train_dataset)
-        val_avg_loss = self.avg_loss(val_dataset)
-        avg_loss_dict = {'train': train_avg_loss,
-                         'val': val_avg_loss}
-        if external_dataset is not None:
-            external_avg_loss = self.avg_loss(external_dataset)
-            avg_loss_dict.update({'ext': external_avg_loss})
-        writer.add_scalars('loss',
-                           avg_loss_dict,
-                           counter)
-
-        train_f1 = self.f1_score_(train_dataset, average='weighted')
-        val_f1 = self.f1_score_(val_dataset, average='weighted')
-        f1_dict = {'train': train_f1,
-                   'val': val_f1}
-        if external_dataset is not None:
-            external_f1 = self.f1_score_(external_dataset, average='weighted')
-            f1_dict.update({'ext': external_f1})
-        writer.add_scalars('f1_score',
-                           f1_dict,
-                           counter)
-
-        train_max_softmax = self.max_softmax(train_dataset)
-        val_max_softmax = self.max_softmax(val_dataset)
-        if external_dataset is not None:
-            external_max_softmax = self.max_softmax(external_dataset)
-        train_max_softmax_correct, train_max_softmax_incorrect = \
-            self.max_softmax(train_dataset, split=True)
-        val_max_softmax_correct, val_max_softmax_incorrect = \
-            self.max_softmax(val_dataset, split=True)
-        if external_dataset is not None:
-            external_max_softmax_correct, external_max_softmax_incorrect = \
-                self.max_softmax(external_dataset, split=True)
-
-        writer.add_histogram('max_softmax/train/all', train_max_softmax,
-                             counter)
-        writer.add_histogram('max_softmax/val/all', val_max_softmax, counter)
-
-        # only plot if the quantity has entries
-        if len(train_max_softmax_correct) > 0:
-            writer.add_histogram('max_softmax/train/correct',
-                                 train_max_softmax_correct,
-                                 counter)
-        if len(train_max_softmax_incorrect) > 0:
-            writer.add_histogram('max_softmax/train/incorrect',
-                                 train_max_softmax_incorrect,
-                                 counter)
-
-        writer.add_histogram('max_softmax/val/all', val_max_softmax, counter)
-        if len(val_max_softmax_correct) > 0:
-            writer.add_histogram('max_softmax/val/correct',
-                                 val_max_softmax_correct,
-                                 counter)
-        if len(val_max_softmax_incorrect) > 0:
-            writer.add_histogram('max_softmax/val/incorrect',
-                                 val_max_softmax_incorrect,
-                                 counter)
-        # only plot if external dataset exists
-        if external_dataset is not None:
-            writer.add_histogram('max_softmax/ext/all', external_max_softmax,
-                                 counter)
-            if len(external_max_softmax_correct) > 0:
-                writer.add_histogram('max_softmax/ext/correct',
-                                     external_max_softmax_correct,
-                                     counter)
-            if len(external_max_softmax_incorrect) > 0:
-                writer.add_histogram('max_softmax/ext/incorrect',
-                                     external_max_softmax_incorrect,
-                                     counter)
-        print("IT: {}, Train ACC: {}".format(counter,
-                                             train_accuracy))
-        print("IT: {}, Val ACC: {}".format(counter,
-                                           val_accuracy))
-        if external_dataset is not None:
-            print("IT: {}, Ext ACC: {}".format(counter,
-                                               external_accuracy))
 
     def forward(self, data):
 
