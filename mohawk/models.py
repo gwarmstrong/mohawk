@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from torch.nn import MSELoss, CrossEntropyLoss
+from torch.nn import CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
 from typing import Optional
 from sklearn.metrics import f1_score
@@ -155,13 +155,14 @@ class SmallConvNet(BaseModel):
 
     def fit(self,
             train_dataset: DataLoader,
-            val_dataset: Optional[DataLoader],
-            external_dataset: Optional[DataLoader],
-            seed: Optional[int],
-            log_dir: Optional[str],
+            val_dataset: Optional[DataLoader] = None,
+            external_dataset: Optional[DataLoader] = None,
+            seed: Optional[int] = None,
+            log_dir: Optional[str] = None,
             epochs: int = 1000,
             summary_interval: int = 10,
             gpu: bool = False,
+            summarize: bool = True,
             summary_kwargs: Optional[dict] = dict(),
             **kwargs):
 
@@ -192,7 +193,7 @@ class SmallConvNet(BaseModel):
                 _, y, y_pred = self.forward_step(data)
                 self.backward_step(y, y_pred, optimizer)
 
-            if index_epoch % summary_interval == 0:
+            if summarize and (index_epoch % summary_interval == 0):
                 self.summarize(writer,
                                counter=index_epoch,
                                train_dataset=train_dataset,
@@ -201,6 +202,68 @@ class SmallConvNet(BaseModel):
                                **summary_kwargs)
 
         writer.close()
+
+    def summarize_alt(self,
+                      writer,
+                      counter=0,
+                      train_dataset=None,
+                      val_dataset=None,
+                      external_dataset=None,
+                      classify_threshold=None):
+
+        datasets = {'train': train_dataset,
+                    'val': val_dataset,
+                    'ext': external_dataset}
+        datasets = {name: dataset for name, dataset in datasets.items() if
+                    dataset is not None}
+
+        # TODO could have self.add_scalar and self.add_histogram methods ?
+        accuracies = self.summary_helper(datasets, self.accuracy)
+        writer.add_scalars('accuracy-global', accuracies, counter)
+
+        if classify_threshold is not None:
+            threshold_accuracies = self.summary_helper(datasets,
+                                                       self.accuracy,
+                                                       {'cutoff':
+                                                        classify_threshold})
+            writer.add_scalars('accuracy-threshold_{}'.format(
+                classify_threshold),
+                threshold_accuracies,
+                counter)
+
+        avg_losses = self.summary_helper(datasets, self.avg_loss)
+        writer.add_scalars('loss',
+                           avg_losses,
+                           counter)
+
+        max_softmax = self.summary_helper(datasets, self.max_softmax)
+        # writing this one is weird
+        for name, softmax in max_softmax.items():
+            writer.add_histogram('max_softmax/{}/all'.format(name),
+                                 softmax,
+                                 counter)
+
+        max_softmax_split = self.summary_helper(datasets,
+                                                self.max_softmax,
+                                                {'split': True})
+        # writing this one is weird
+        for name, (correct, incorrect) in max_softmax_split.items():
+            writer.add_histogram('max_softmax/{}/correct'.format(name),
+                                 correct,
+                                 counter)
+            writer.add_histogram('max_softmax/{}/incorrect'.format(name),
+                                 incorrect,
+                                 counter)
+
+        for name, acc in accuracies.items():
+            print("IT: {}, {} ACC: {}".format(counter,
+                                              name,
+                                              acc))
+
+    @staticmethod
+    def summary_helper(datasets, metric, metric_kwargs) -> dict:
+        return {name: metric(dataset, **metric_kwargs) for name, dataset in
+                datasets.items()}
 
     def summarize(self,
                   writer,
@@ -221,6 +284,7 @@ class SmallConvNet(BaseModel):
                            accuracy_dict,
                            counter)
 
+        # could probably replace most of this with something like:
         # only add if threshold is specified
         if classify_threshold is not None:
             train_accuracy_thresh = self.accuracy(train_dataset,
