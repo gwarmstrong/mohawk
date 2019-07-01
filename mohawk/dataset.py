@@ -37,10 +37,12 @@ class SequenceDataset(Dataset):
         return len(self.classes)
 
     def __getitem__(self, idx):
+        # TODO could I remove `label_english`?
         return {'read': self.reads[idx], 'label': self.labels[idx],
                 'label_english': self.classes[idx]}
 
 
+# TODO could go
 def encode_classes(classes):
     encoder = LabelEncoder()
     new_classes = np.array(classes).reshape(-1, 1).ravel()
