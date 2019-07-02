@@ -2,7 +2,7 @@
 # from mohawk.simulation import simulate_from_genomes, id_to_lineage
 import torch
 from mohawk.trainer import trainer
-from mohawk.models import BaseModel, SmallConvNet
+from mohawk.models import BaseModel, SmallConvNet, ConvNet2
 
 # trial_ids = [
 #              'GCF_000011545.1',  # Burkholderia pseudomallei K96243
@@ -67,7 +67,7 @@ train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
                 'epochs': 1000,
                 'summarize': True,
-                'learning_rate': 0.1,
+                'learning_rate': 0.001,
                 }
 summary_kwargs = {'classify_threshold': 0.8,
                   'concise': True}
@@ -81,7 +81,7 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 # print(reads[:5], classes[:5])
 # print(reads[-5:], classes[-5:])
 
-model = trainer(SmallConvNet, trial_ids, distribution, total_reads, length,
+model = trainer(ConvNet2, trial_ids, distribution, total_reads, length,
                 train_ratio, data_directory=trial_directory, random_seed=seed,
                 batch_size=batch_size,
                 **external_validation_params,

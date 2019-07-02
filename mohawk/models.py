@@ -20,11 +20,6 @@ class BaseModel(nn.Module):
     def forward(self, data):
         pass
 
-    def summarize(self, writer, **kwargs):
-        # TODO maybe save predictions?
-        # TODO definitely save trained model
-        pass
-
     # might need to separate fit's kwargs from trainer's kwargs
     def fit(self,
             train_dataset: DataLoader,
@@ -37,7 +32,6 @@ class BaseModel(nn.Module):
 
     def forward_step(self, data):
         x = data['read']
-        print("Forward: {}".format(len(x)))
         x = x.to(self.device)
         y_pred = self(x)
         y = data['label']
@@ -132,7 +126,6 @@ class BaseModel(nn.Module):
         total_present = 0
         total_loss = 0
         total_samples = 0
-        print('len: {}'.format(len(dataloader)))
         for data in dataloader:
             _, y, y_pred = self.forward_step(data)
             y_pred_max = y_pred.max(1)
@@ -145,9 +138,6 @@ class BaseModel(nn.Module):
             loss = self.loss_fn(y_pred, y)
             total_loss += loss.item()
             total_samples += len(y)
-
-        print(total_correct)
-        print(total_loss)
 
         # correct for no predictions made
         if total_present == 0:
@@ -190,13 +180,8 @@ class BaseModel(nn.Module):
                                  input_to_model=data['read'].to(self.device)
                                  )
 
-        # give hint to where model is being trained (see if moved to gpu))
-        print("Training on: {}".format(self.fc1.weight.device))
-        # device = self.fc1.weight.device
-
         # run for an extra epoch to hit a multiple of 10 # TODO should go?
         for index_epoch in range(epochs + 1):
-            print('Beginning Epoch {}...'.format(index_epoch))
             for data in train_dataset:
                 _, y, y_pred = self.forward_step(data)
                 self.backward_step(y, y_pred, optimizer)
@@ -209,8 +194,6 @@ class BaseModel(nn.Module):
                                external_dataset=external_dataset,
                                **summary_kwargs)
 
-            print('Done.')
-
         writer.close()
 
     def summarize(self,
@@ -222,8 +205,6 @@ class BaseModel(nn.Module):
                   val_dataset=None,
                   external_dataset=None,
                   classify_threshold=None):
-
-        print('Summarizing...')
 
         datasets = {'train': train_dataset,
                     'val': val_dataset,
@@ -352,3 +333,45 @@ class SmallConvNet(BaseModel):
 
         return x
 
+
+class ConvNet2(BaseModel):
+    def __init__(self,
+                 n_classes: int,
+                 length: int,
+                 seed: Optional[int] = None,
+                 ):
+        super(ConvNet2, self).__init__(seed=seed)
+
+        self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.optim = Adam
+
+        dilations = [1, 2, 4, 8, 16]
+        channels = [4, 8, 16, 8, 4, 1]
+        linear_sizes = [119, 200, 100, 50, n_classes] # TODO how 119?
+        self.conv = nn.Sequential()
+        for i, d in enumerate(dilations):
+            self.conv.add_module('Conv_' + str(i),
+                                 nn.Conv1d(in_channels=channels[i],
+                                           out_channels=channels[i + 1],
+                                           kernel_size=2,
+                                           dilation=d
+                                           )
+                                 )
+            self.conv.add_module('Conv_' + str(i)+'_relu', nn.ReLU())
+
+        self.fc = nn.Sequential()
+        for i in range(1, len(linear_sizes)):
+            self.fc.add_module('FC_' + str(i),
+                                 nn.Linear(linear_sizes[i - 1],
+                                           linear_sizes[i]),
+                                 )
+            if i < len(linear_sizes) - 1:
+                self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
+            else:
+                self.fc.add_module('Softmax', nn.Softmax(dim=1))
+
+    def forward(self, data):
+        x = self.conv(data)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
