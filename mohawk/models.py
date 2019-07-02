@@ -120,10 +120,41 @@ class BaseModel(nn.Module):
             max_preds = max_preds.cpu().detach().numpy()
             correct_max = max_preds[np.where(correct == 1)]
             incorrect_max = max_preds[np.where(correct == 0)]
-            return correct_max, incorrect_max
+            return correct_max if len(correct_max) > 0 else None, \
+                incorrect_max if len(incorrect_max) > 0 else None
 
         else:
             return max_preds
+
+    def concise_summary(self, dataloader):
+        total_correct = 0
+        total_present = 0
+        total_loss = 0
+        total_samples = 0
+        print('len: {}'.format(len(dataloader)))
+        for data in dataloader:
+            _, y, y_pred = self.forward_step(data)
+            y_pred_max = y_pred.max(1)
+            y_pred_class = y_pred_max.indices
+            y_pred_max_val = y_pred_max.values
+            over_cutoff = y_pred_max_val > 0
+            correct = torch.eq(y, y_pred_class) & over_cutoff
+            total_correct += correct.sum().item()
+            total_present += over_cutoff.sum().item()
+            loss = self.loss_fn(y_pred, y)
+            total_loss += loss.item()
+            total_samples += len(y)
+
+        print(total_correct)
+        print(total_loss)
+
+        # correct for no predictions made
+        if total_present == 0:
+            total_present = 1
+
+        return {'accuracy-global': total_correct / total_present,
+                'avg-loss': total_loss / total_samples
+                }
 
 
 class SmallConvNet(BaseModel):
@@ -189,6 +220,7 @@ class SmallConvNet(BaseModel):
 
         # run for an extra epoch to hit a multiple of 10 # TODO should go?
         for index_epoch in range(epochs + 1):
+            print('Beginning Epoch {}...'.format(index_epoch))
             for data in train_dataset:
                 _, y, y_pred = self.forward_step(data)
                 self.backward_step(y, y_pred, optimizer)
@@ -201,76 +233,100 @@ class SmallConvNet(BaseModel):
                                external_dataset=external_dataset,
                                **summary_kwargs)
 
+            print('Done.')
+
         writer.close()
 
     def summarize(self,
                   writer,
                   counter=0,
                   average='weighted',
+                  concise=True,
                   train_dataset=None,
                   val_dataset=None,
                   external_dataset=None,
                   classify_threshold=None):
+
+        print('Summarizing...')
 
         datasets = {'train': train_dataset,
                     'val': val_dataset,
                     'ext': external_dataset}
         datasets = {name: dataset for name, dataset in datasets.items() if
                     dataset is not None}
+        if concise:
+            summary_stats = self.summary_helper(datasets, self.concise_summary)
+            extract_metrics = ['accuracy-global', 'avg-loss']
+            reshaped_stats = dict()
+            for metric in extract_metrics:
+                reshaped_stats[metric] = {dataset: summary_stats[dataset][
+                    metric] for dataset in summary_stats}
 
-        # TODO could have self.add_scalar and self.add_histogram methods ?
-        accuracies = self.summary_helper(datasets, self.accuracy)
-        writer.add_scalars('accuracy-global', accuracies, counter)
+                writer.add_scalars(metric,
+                                   reshaped_stats[metric],
+                                   counter)
+            for name, acc in reshaped_stats['accuracy-global'].items():
+                print("IT: {}, {} ACC: {}".format(counter,
+                                                  name,
+                                                  acc))
 
-        if classify_threshold is not None:
-            threshold_accuracies = self.summary_helper(datasets,
-                                                       self.accuracy,
-                                                       {'cutoff':
-                                                        classify_threshold})
-            writer.add_scalars('accuracy-threshold_{}'.format(
-                classify_threshold),
-                threshold_accuracies,
-                counter)
+        else:
+            # TODO could have self.add_scalar and self.add_histogram methods ?
+            accuracies = self.summary_helper(datasets, self.accuracy)
+            writer.add_scalars('accuracy-global', accuracies, counter)
 
-        avg_losses = self.summary_helper(datasets, self.avg_loss)
-        writer.add_scalars('loss',
-                           avg_losses,
-                           counter)
+            if classify_threshold is not None:
+                threshold_accuracies = self.summary_helper(
+                    datasets, self.accuracy, {'cutoff': classify_threshold})
+                writer.add_scalars('accuracy-threshold_{}'.format(
+                    classify_threshold),
+                    threshold_accuracies,
+                    counter)
 
-        f1_scores = self.summary_helper(datasets, self.f1_score_,
-                                        {'average': average})
-        writer.add_scalars('f1-score',
-                           f1_scores,
-                           counter)
+            avg_losses = self.summary_helper(datasets, self.avg_loss)
+            writer.add_scalars('loss',
+                               avg_losses,
+                               counter)
 
-        max_softmax = self.summary_helper(datasets, self.max_softmax)
-        # writing this one is weird
-        for name, softmax in max_softmax.items():
-            writer.add_histogram('max_softmax/{}/all'.format(name),
-                                 softmax,
-                                 counter)
+            f1_scores = self.summary_helper(datasets, self.f1_score_,
+                                            {'average': average})
+            writer.add_scalars('f1-score',
+                               f1_scores,
+                               counter)
 
-        max_softmax_split = self.summary_helper(datasets,
-                                                self.max_softmax,
-                                                {'split': True})
-        # writing this one is weird
-        for name, (correct, incorrect) in max_softmax_split.items():
-            writer.add_histogram('max_softmax/{}/correct'.format(name),
-                                 correct,
-                                 counter)
-            writer.add_histogram('max_softmax/{}/incorrect'.format(name),
-                                 incorrect,
-                                 counter)
+            max_softmax = self.summary_helper(datasets, self.max_softmax)
+            # writing this one is weird
+            for name, softmax in max_softmax.items():
+                writer.add_histogram('max_softmax/{}/all'.format(name),
+                                     softmax,
+                                     counter)
 
-        for name, acc in accuracies.items():
-            print("IT: {}, {} ACC: {}".format(counter,
-                                              name,
-                                              acc))
+            max_softmax_split = self.summary_helper(datasets,
+                                                    self.max_softmax,
+                                                    {'split': True})
+            # writing this one is weird
+            for name, (correct, incorrect) in max_softmax_split.items():
+                if correct is not None:
+                    writer.add_histogram('max_softmax/{}/correct'.format(name),
+                                         correct,
+                                         counter)
+                if incorrect is not None:
+                    writer.add_histogram('max_softmax/{}/incorrect'.format(
+                                         name),
+                                         incorrect,
+                                         counter)
+
+            for name, acc in accuracies.items():
+                print("IT: {}, {} ACC: {}".format(counter,
+                                                  name,
+                                                  acc))
 
     @staticmethod
     def summary_helper(datasets, metric, metric_kwargs=dict()) -> dict:
-        return {name: metric(dataset, **metric_kwargs) for name, dataset in
-                datasets.items()}
+        metrics = {name: metric(dataset, **metric_kwargs) for name, dataset in
+                   datasets.items()}
+        return {name: value for name, value in metrics.items() if value is
+                not None}
 
     def forward(self, data):
 
