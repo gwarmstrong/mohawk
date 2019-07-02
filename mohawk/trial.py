@@ -67,6 +67,7 @@ train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
                 'epochs': 1000,
                 'summarize': True,
+                'learning_rate': 0.1,
                 }
 summary_kwargs = {'classify_threshold': 0.8,
                   'concise': True}

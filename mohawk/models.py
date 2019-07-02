@@ -165,6 +165,7 @@ class BaseModel(nn.Module):
             log_dir: Optional[str] = None,
             epochs: int = 1000,
             summary_interval: int = 10,
+            learning_rate: float = 0.0001,
             gpu: bool = False,
             summarize: bool = True,
             summary_kwargs: Optional[dict] = dict(),
@@ -175,7 +176,9 @@ class BaseModel(nn.Module):
 
         writer = SummaryWriter(log_dir=log_dir)
 
-        optimizer = self.optim(self.parameters(), lr=0.0001, weight_decay=0)
+        optimizer = self.optim(self.parameters(),
+                               lr=learning_rate,
+                               weight_decay=0)
 
         self.device = torch.device('cuda' if gpu else 'cpu')
         # self.to(device)
