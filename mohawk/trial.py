@@ -50,7 +50,7 @@ validation_ids = [
 trial_directory = '../data/trial_download'
 n_samples = len(trial_ids)
 distribution = [1/n_samples] * n_samples
-total_reads = 200000 * 15
+total_reads = 20000 * 15
 length = 150
 train_ratio = 0.8
 seed = 1234
@@ -64,9 +64,11 @@ external_validation_params = {
 
 train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
-                'epochs': 1000
-               }
-summary_kwargs = {'classify_threshold': 0.25}
+                'epochs': 1000,
+                'summarize': True
+                }
+summary_kwargs = {'classify_threshold': 0.8,
+                  'concise': True}
 print("CUDA available: {}".format(train_kwargs['gpu']))
 
 # file_paths = data_downloader(trial_ids, genomes_directory=trial_directory)
