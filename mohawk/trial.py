@@ -54,6 +54,7 @@ total_reads = 20000 * 15
 length = 150
 train_ratio = 0.8
 seed = 1234
+batch_size = 64
 
 external_validation_params = {
     'external_validation_ids': validation_ids,
@@ -66,7 +67,6 @@ train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
                 'epochs': 1000,
                 'summarize': True,
-                'batch_size': 64
                 }
 summary_kwargs = {'classify_threshold': 0.8,
                   'concise': True}
@@ -82,6 +82,7 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 
 model = trainer(SmallConvNet, trial_ids, distribution, total_reads, length,
                 train_ratio, data_directory=trial_directory, random_seed=seed,
+                batch_size=batch_size,
                 **external_validation_params,
                 train_kwargs=train_kwargs,
                 summary_kwargs=summary_kwargs)
