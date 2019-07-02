@@ -37,6 +37,7 @@ class BaseModel(nn.Module):
 
     def forward_step(self, data):
         x = data['read']
+        print("Forward: {}".format(len(x)))
         x = x.to(self.device)
         y_pred = self(x)
         y = data['label']
@@ -155,34 +156,6 @@ class BaseModel(nn.Module):
         return {'accuracy-global': total_correct / total_present,
                 'avg-loss': total_loss / total_samples
                 }
-
-
-class SmallConvNet(BaseModel):
-
-    def __init__(self,
-                 n_classes: int,
-                 length: int,
-                 seed: Optional[int] = None,
-                 ):
-        super(SmallConvNet, self).__init__(seed=seed)
-
-        self.conv1_kernel_size = 7
-        self.n_bases = 4
-        self.n_filters = 11
-        self.seq_length = length
-        self.n_classes = n_classes
-        self.conv1 = nn.Conv1d(self.n_bases, self.n_filters,
-                               kernel_size=self.conv1_kernel_size)
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.fc1_in_dim = int((self.seq_length - self.conv1_kernel_size + 1)
-                              / 2) * self.n_filters
-
-        self.fc1 = nn.Linear(self.fc1_in_dim, 50)
-        self.fc2 = nn.Linear(50, self.n_classes)
-        self.softmax = nn.Softmax(dim=1)
-        self.optim = Adam
-        self.loss_fn = CrossEntropyLoss(reduction='sum')
-        self.device = None
 
     def fit(self,
             train_dataset: DataLoader,
@@ -312,9 +285,9 @@ class SmallConvNet(BaseModel):
                                          counter)
                 if incorrect is not None:
                     writer.add_histogram('max_softmax/{}/incorrect'.format(
-                                         name),
-                                         incorrect,
-                                         counter)
+                        name),
+                        incorrect,
+                        counter)
 
             for name, acc in accuracies.items():
                 print("IT: {}, {} ACC: {}".format(counter,
@@ -327,6 +300,34 @@ class SmallConvNet(BaseModel):
                    datasets.items()}
         return {name: value for name, value in metrics.items() if value is
                 not None}
+
+
+class SmallConvNet(BaseModel):
+
+    def __init__(self,
+                 n_classes: int,
+                 length: int,
+                 seed: Optional[int] = None,
+                 ):
+        super(SmallConvNet, self).__init__(seed=seed)
+
+        self.conv1_kernel_size = 7
+        self.n_bases = 4
+        self.n_filters = 11
+        self.seq_length = length
+        self.n_classes = n_classes
+        self.conv1 = nn.Conv1d(self.n_bases, self.n_filters,
+                               kernel_size=self.conv1_kernel_size)
+        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.fc1_in_dim = int((self.seq_length - self.conv1_kernel_size + 1)
+                              / 2) * self.n_filters
+
+        self.fc1 = nn.Linear(self.fc1_in_dim, 50)
+        self.fc2 = nn.Linear(50, self.n_classes)
+        self.softmax = nn.Softmax(dim=1)
+        self.optim = Adam
+        self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.device = None
 
     def forward(self, data):
 
