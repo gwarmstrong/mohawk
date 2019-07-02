@@ -65,7 +65,8 @@ external_validation_params = {
 train_kwargs = {'gpu': torch.cuda.is_available(),
                 'summary_interval': 1,
                 'epochs': 1000,
-                'summarize': True
+                'summarize': True,
+                'batch_size': 64
                 }
 summary_kwargs = {'classify_threshold': 0.8,
                   'concise': True}

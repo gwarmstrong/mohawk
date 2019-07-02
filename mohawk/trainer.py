@@ -15,6 +15,7 @@ def trainer(model: nn.Module,
             train_ratio: float,
             level: Optional[str] = 'genus',
             channel: Optional[str] = 'representative',
+            batch_size: Optional[int] = 1,
             data_directory: Optional[str] = None,
             random_seed: Optional[int] = None,
             external_validation_ids: Optional[List[str]] = None,
@@ -72,15 +73,18 @@ def trainer(model: nn.Module,
     train_dataloader = prep_dataloader(reads,
                                        classes,
                                        ids,
+                                       batch_size=batch_size,
                                        indices=train_indices)
     val_dataloader = prep_dataloader(reads,
                                      classes,
                                      ids,
+                                     batch_size=batch_size,
                                      indices=val_indices)
     if external_validation:
         external_dataloader = prep_dataloader(external_reads,
                                               external_classes,
-                                              external_ids)
+                                              external_ids,
+                                              batch_size=batch_size)
     else:
         external_dataloader = None
 
