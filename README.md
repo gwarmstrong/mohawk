@@ -116,7 +116,7 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 - [x] fix TypeError at end of iteration -> caused by summarize call outside in `trainer.py`
 
-- [ ] check seeding, seems slightly off, could be related to conv1d?
+- [x] ~~check seeding, seems slightly off, could be related to conv1d?~~ looks fine
 
 - [ ] custom tensorboard plot for % reads classified and portion classified for each class
 
@@ -124,4 +124,27 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 - [ ] make external validation more elegant
 
+- [x] something is not scaling well because running out of memory on GPU even with dataloader
 
+    - [x] Priority: HIGH
+    
+    - [x] ~~could be related to summaries?~~ -> definitely related to summaries, but I am not sure why. 
+         For now I have just simplified the summary output
+    
+        - [x] put optional summary parameter
+
+- [ ] classify all levels at one?
+
+- [ ] Do I need to support unzipping or can skbio read zipped?
+
+- [ ] write function to harvest nvidia-smi output throughout execution
+
+- [ ] Is there a way to do the evaluation with fewer forward passes?
+
+Week of 07/01 Major todo's:
+
+- [ ] Add more unit tests
+
+- [ ] formalize project scope
+
+- [x] remedy memory ballooning 
