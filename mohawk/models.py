@@ -139,9 +139,8 @@ class BaseModel(nn.Module):
             total_loss += loss.item()
             total_samples += len(y)
 
-            y.cpu()
-            y_pred_class.cpu()
-            new_confusion_matrix = confusion_matrix(y, y_pred_class,
+            new_confusion_matrix = confusion_matrix(y.cpu(),
+                                                    y_pred_class.cpu(),
                                                     labels=self.classes)
             total_confusion_matrix += new_confusion_matrix
 
