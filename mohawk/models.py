@@ -347,13 +347,13 @@ class ConvNet2(BaseModel):
 
         dilations = [1, 2, 4, 8, 16]
         channels = [4, 8, 16, 8, 4, 1]
-        linear_sizes = [119, 200, 100, 50, n_classes] # TODO how 119?
+        linear_sizes = [129, 200, 100, 50, n_classes]  # TODO how 119?
         self.conv = nn.Sequential()
         for i, d in enumerate(dilations):
             self.conv.add_module('Conv_' + str(i),
                                  nn.Conv1d(in_channels=channels[i],
                                            out_channels=channels[i + 1],
-                                           kernel_size=2,
+                                           kernel_size=9,
                                            dilation=d
                                            )
                                  )
@@ -373,5 +373,48 @@ class ConvNet2(BaseModel):
     def forward(self, data):
         x = self.conv(data)
         x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+
+
+class ConvNetAvg(BaseModel):
+    def __init__(self,
+                 n_classes: int,
+                 length: int,
+                 seed: Optional[int] = None,
+                 ):
+        super(ConvNetAvg, self).__init__(seed=seed)
+
+        self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.optim = Adam
+
+        dilations = [1, 2, 4, 8, 16]
+        channels = [4, 20, 40, 80, 100, 120] # first has to be 4
+        linear_sizes = [channels[-1], 200, 100, 50, n_classes]  # TODO how 119?
+        self.conv = nn.Sequential()
+        for i, d in enumerate(dilations):
+            self.conv.add_module('Conv_' + str(i),
+                                 nn.Conv1d(in_channels=channels[i],
+                                           out_channels=channels[i + 1],
+                                           kernel_size=5,
+                                           dilation=d
+                                           )
+                                 )
+            self.conv.add_module('Conv_' + str(i)+'_relu', nn.ReLU())
+
+        self.fc = nn.Sequential()
+        for i in range(1, len(linear_sizes)):
+            self.fc.add_module('FC_' + str(i),
+                               nn.Linear(linear_sizes[i - 1],
+                                         linear_sizes[i]),
+                               )
+            if i < len(linear_sizes) - 1:
+                self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
+            else:
+                self.fc.add_module('Softmax', nn.Softmax(dim=1))
+
+    def forward(self, data):
+        x = self.conv(data)
+        x = x.mean(-1)
         x = self.fc(x)
         return x
