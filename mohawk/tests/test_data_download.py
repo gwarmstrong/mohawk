@@ -1,23 +1,9 @@
 import unittest
 from unittest import mock
 import pandas as pd
-from io import BufferedReader
 from mohawk.data_downloader import (_get_ids_not_downloaded,
-                                    get_ftp_dir,
-                                    representative_genomes_file,
-                                    complete_genomes_file
+                                    get_ftp_dir
                                     )
-
-
-class TestResources(unittest.TestCase):
-
-    def test_finds_representative_ftp(self):
-        ftp_links = representative_genomes_file()
-        self.assertIsInstance(ftp_links, BufferedReader)
-
-    def test_finds_complete_ftp(self):
-        ftp_links = complete_genomes_file()
-        self.assertIsInstance(ftp_links, BufferedReader)
 
 
 class TestGetFTPDir(unittest.TestCase):

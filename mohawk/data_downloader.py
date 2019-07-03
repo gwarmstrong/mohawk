@@ -4,63 +4,8 @@ import shutil
 import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
-from pkg_resources import resource_stream, resource_exists
-from mohawk.utils import _ftp_path, get_fna_name, gz_stripper
-from io import BufferedReader
-
-
-def representative_genomes_file() -> BufferedReader:
-    """Returns a buffer containing ftp links to RefSeq
-
-    Returns
-    -------
-
-    BufferedReader
-        Contains the ftp links to the 'Representative' RefSeq genomes
-
-
-    Raises
-    ------
-
-    IOError
-        If unable to find the resource
-
-    """
-    if resource_exists('mohawk.resources',
-                       'refseq_representative_genomes_ftp.txt'):
-
-        return resource_stream(
-            'mohawk.resources', 'refseq_representative_genomes_ftp.txt'
-            )
-    else:
-        raise IOError('Unable to find package resources.')
-
-
-def complete_genomes_file() -> BufferedReader:
-    """Returns a buffer containing ftp links to RefSeq
-
-    Returns
-    -------
-
-    BufferedReader
-        Contains the ftp links to the 'Complete' RefSeq genomes
-
-
-    Raises
-    ------
-
-    IOError
-        If unable to find the resource
-
-    """
-
-    if resource_exists('mohawk.resources',
-                       'refseq_complete_genomes_ftp.txt'):
-        return resource_stream(
-            'mohawk.resources', 'refseq_complete_genomes_ftp.txt'
-        )
-    else:
-        raise IOError('Unable to find package resources.')
+from mohawk.utils import _ftp_path, get_fna_name, gz_stripper, \
+    representative_genomes_file, complete_genomes_file
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
