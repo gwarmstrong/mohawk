@@ -158,8 +158,11 @@ class BaseModel(nn.Module):
             learning_rate: float = 0.0001,
             gpu: bool = False,
             summarize: bool = True,
-            summary_kwargs: Optional[dict] = dict(),
+            summary_kwargs: Optional[dict] = None,
             **kwargs):
+
+        if summary_kwargs is None:
+            summary_kwargs = dict()
 
         if seed is not None:
             torch.manual_seed(seed+3)
@@ -279,7 +282,9 @@ class BaseModel(nn.Module):
                                                   acc))
 
     @staticmethod
-    def summary_helper(datasets, metric, metric_kwargs=dict()) -> dict:
+    def summary_helper(datasets, metric, metric_kwargs=None) -> dict:
+        if metric_kwargs is None:
+            metric_kwargs = dict()
         metrics = {name: metric(dataset, **metric_kwargs) for name, dataset in
                    datasets.items()}
         return {name: value for name, value in metrics.items() if value is

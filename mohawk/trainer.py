@@ -21,9 +21,16 @@ def trainer(model: nn.Module,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
-            model_kwargs: Optional[dict] = dict(),
-            train_kwargs: Optional[dict] = dict(),
-            summary_kwargs: Optional[dict] = dict()):
+            model_kwargs: Optional[dict] = None,
+            train_kwargs: Optional[dict] = None,
+            summary_kwargs: Optional[dict] = None):
+
+    if model_kwargs is None:
+        model_kwargs = dict()
+    if train_kwargs is None:
+        train_kwargs = dict()
+    if summary_kwargs is None:
+        summary_kwargs = dict()
 
     data_downloader(id_list,
                     genomes_directory=data_directory,
@@ -65,7 +72,7 @@ def trainer(model: nn.Module,
 
     # split into train and validation
     num_samples = len(classes)
-    # TODO should make robust to no validation set
+
     train_indices, val_indices = train_val_split(num_samples, train_ratio,
                                                  random_seed=random_seed)
 
