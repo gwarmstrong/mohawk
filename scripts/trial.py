@@ -1,8 +1,10 @@
 # from mohawk.data_downloader import data_downloader
 # from mohawk.simulation import simulate_from_genomes, id_to_lineage
 import torch
+import pandas as pd
 from mohawk.trainer import trainer
 from mohawk.models import BaseModel, SmallConvNet, ConvNet2, ConvNetAvg
+from mohawk.simulation import id_to_lineage
 
 # trial_ids = [
 #              'GCF_000011545.1',  # Burkholderia pseudomallei K96243
@@ -47,19 +49,28 @@ validation_ids = [
 # try another thing... train on all references for these clades that are not
 # in validation id's (make sure to exclude strain)
 
+level = 'genus'
+
+trial_classes = id_to_lineage(trial_ids, level)
+class_counts = pd.Series(trial_classes).value_counts().to_dict()
+distribution_numerator = [1 / class_counts[class_] for class_ in trial_classes]
+distribution_denominator = sum(distribution_numerator)
+distribution = [numerator / distribution_denominator for numerator in
+                distribution_numerator]
+
 trial_directory = '../data/trial_download'
 n_samples = len(trial_ids)
-distribution = [1/n_samples] * n_samples
-total_reads = 200#00 * 15  # * 10
+# distribution = [1/n_samples] * n_samples
+total_reads = 20000 * 15  # * 10
 length = 150
 train_ratio = 0.8
 seed = 1234
 batch_size = 64
-weight = True
+weight = False  # True
 
 external_validation_params = {
     'external_validation_ids': validation_ids,
-    'n_external_validation_reads': 20, # 0000,  # * 3,
+    'n_external_validation_reads': 200000,  # * 3,
     'external_validation_distribution': [1/6] * 6,  # TODO make safe to
     # changes in ids
 }
@@ -86,6 +97,7 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 
 model = trainer(ConvNetAvg, trial_ids, distribution, total_reads, length,
                 train_ratio, data_directory=trial_directory, random_seed=seed,
+                level=level,
                 batch_size=batch_size,
                 weight=weight,
                 **external_validation_params,
