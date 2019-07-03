@@ -36,7 +36,8 @@ def simulate_from_genomes(id_list: List[str],
                           length: int,
                           channel: Optional[str] = 'representative',
                           sequence_directory: Optional[str] = None,
-                          random_seed: Optional[int] = None):
+                          random_seed: Optional[int] = None,
+                          distribution_noise: Optional[str] = True):
 
     if channel == 'representative':
         lineage_info = pd.read_csv(representative_genomes_lineage(),
@@ -58,7 +59,10 @@ def simulate_from_genomes(id_list: List[str],
         sequence_directory = os.path.curdir()
 
     # use multinomial to get number of reads for each id
-    id_depths = np.random.multinomial(total_reads, distribution)
+    if distribution_noise:
+        id_depths = np.random.multinomial(total_reads, distribution)
+    else:
+        id_depths = [round(val * total_reads) for val in distribution]
 
     # then simulate reads from each
     all_reads = []

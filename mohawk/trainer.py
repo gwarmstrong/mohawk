@@ -23,6 +23,7 @@ def trainer(model: nn.Module,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
             weight: Optional[bool] = False,
+            distribution_noise: Optional[bool] = True,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None):
@@ -40,7 +41,8 @@ def trainer(model: nn.Module,
 
     reads, ids = simulate_from_genomes(id_list, distribution, total_reads,
                                        length, channel, data_directory,
-                                       random_seed)
+                                       random_seed,
+                                       distribution_noise=distribution_noise)
 
     classes = id_to_lineage(ids, level, channel)
 
@@ -60,7 +62,8 @@ def trainer(model: nn.Module,
             length,
             channel,  # presumably should be available in the same channel
             data_directory,
-            random_seed + 5
+            random_seed + 5,
+            distribution_noise=distribution_noise
             )
 
         external_validation = True
