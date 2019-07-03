@@ -50,7 +50,7 @@ validation_ids = [
 trial_directory = '../data/trial_download'
 n_samples = len(trial_ids)
 distribution = [1/n_samples] * n_samples
-total_reads = 20000 * 15
+total_reads = 200 #00 * 15
 length = 150
 train_ratio = 0.8
 seed = 1234
@@ -58,7 +58,7 @@ batch_size = 64
 
 external_validation_params = {
     'external_validation_ids': validation_ids,
-    'n_external_validation_reads': 200000,
+    'n_external_validation_reads': 20, # 0000,
     'external_validation_distribution': [1/6] * 6,  # TODO make safe to
     # changes in ids
 }
