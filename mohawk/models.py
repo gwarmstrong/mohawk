@@ -11,6 +11,9 @@ import numpy as np
 import matplotlib.figure
 import itertools
 from textwrap import wrap
+import socket
+from datetime import datetime
+import os
 
 
 class BaseModel(nn.Module):
@@ -154,15 +157,16 @@ class BaseModel(nn.Module):
                     total_confusion_matrix)
                 }
 
-    def plot_confusion_matrix(self, cm, normalize=True):
+    def plot_confusion_matrix(self, cm, normalize=False):
         if normalize:
             cm = cm.astype('float') * 10 / \
                  cm.sum(axis=1)[:, np.newaxis]
             cm = np.nan_to_num(cm, copy=True)
-            cm = cm.astype('int')
+
+        cm = cm.astype('int')
 
         np.set_printoptions(precision=2)
-        fig = matplotlib.figure.Figure(figsize=(7, 7), dpi=320, facecolor='w',
+        fig = matplotlib.figure.Figure(figsize=(2, 2), dpi=320, facecolor='w',
                                        edgecolor='k')
 
         ax = fig.add_subplot(1, 1, 1)
@@ -187,10 +191,18 @@ class BaseModel(nn.Module):
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             ax.text(j, i, format(cm[i, j], 'd') if cm[i, j] != 0 else '.',
-                    horizontalalignment="center", fontsize=6,
+                    horizontalalignment="center", fontsize=2,
                     verticalalignment='center', color="black")
         fig.set_tight_layout(True)
         return fig
+
+    @staticmethod
+    def get_log_dir(log_dir):
+        if log_dir is not None:
+            current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+            log_dir = os.path.join(
+                log_dir, current_time + '_' + socket.gethostname())
+        return log_dir
 
     def fit(self,
             train_dataset: DataLoader,
@@ -216,6 +228,7 @@ class BaseModel(nn.Module):
         self.classes.sort()
         self.class_encoder = train_dataset.dataset.label_encoder
 
+        log_dir = self.get_log_dir(log_dir)
         writer = SummaryWriter(log_dir=log_dir)
 
         optimizer = self.optim(self.parameters(),
