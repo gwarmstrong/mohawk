@@ -6,28 +6,24 @@ from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
 from typing import Optional
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, confusion_matrix
 import numpy as np
+import matplotlib.figure
+import itertools
+from textwrap import wrap
 
 
 class BaseModel(nn.Module):
 
     def __init__(self, seed=None, **kwargs):
         super(BaseModel, self).__init__()
+        self.classes = None
+        self.device = None
+        self.class_encoder = None
         if seed is not None:
             torch.manual_seed(seed+2)
 
     def forward(self, data):
-        pass
-
-    # might need to separate fit's kwargs from trainer's kwargs
-    def fit(self,
-            train_dataset: DataLoader,
-            val_dataset: Optional[DataLoader],
-            seed: Optional[int],
-            log_dir: Optional[str],
-            epochs: Optional[int],
-            **kwargs):
         pass
 
     def forward_step(self, data):
@@ -122,12 +118,16 @@ class BaseModel(nn.Module):
             return max_preds
 
     def concise_summary(self, dataloader):
+        # TODO add confusion matrix
         total_correct = 0
         total_present = 0
         total_loss = 0
         total_samples = 0
+        n_classes = len(self.classes)
+        total_confusion_matrix = np.zeros((n_classes, n_classes))
         for data in dataloader:
-            _, y, y_pred = self.forward_step(data)
+            with torch.no_grad():
+                _, y, y_pred = self.forward_step(data)
             y_pred_max = y_pred.max(1)
             y_pred_class = y_pred_max.indices
             y_pred_max_val = y_pred_max.values
@@ -139,13 +139,57 @@ class BaseModel(nn.Module):
             total_loss += loss.item()
             total_samples += len(y)
 
+            new_confusion_matrix = confusion_matrix(y, y_pred_class,
+                                                    labels=self.classes)
+            total_confusion_matrix += new_confusion_matrix
+
         # correct for no predictions made
         if total_present == 0:
             total_present = 1
 
         return {'accuracy-global': total_correct / total_present,
-                'avg-loss': total_loss / total_samples
+                'avg-loss': total_loss / total_samples,
+                'confusion-matrix': self.plot_confusion_matrix(
+                    total_confusion_matrix)
                 }
+
+    def plot_confusion_matrix(self, cm, normalize=True):
+        if normalize:
+            cm = cm.astype('float') * 10 / \
+                 cm.sum(axis=1)[:, np.newaxis]
+            cm = np.nan_to_num(cm, copy=True)
+            cm = cm.astype('int')
+
+        np.set_printoptions(precision=2)
+        fig = matplotlib.figure.Figure(figsize=(7, 7), dpi=320, facecolor='w',
+                                       edgecolor='k')
+
+        ax = fig.add_subplot(1, 1, 1)
+        im = ax.imshow(cm, cmap='Oranges')
+
+        classes = self.class_encoder.inverse_transform(self.classes)
+        classes = ['\n'.join(wrap(l, 40)) for l in classes]
+
+        tick_marks = np.arange(len(classes))
+
+        ax.set_xlabel('Predicted', fontsize=7)
+        ax.set_xticks(tick_marks)
+        ax.set_xticklabels(classes, fontsize=4, rotation=-90, ha='center')
+        ax.xaxis.set_label_position('bottom')
+        ax.xaxis.tick_bottom()
+
+        ax.set_ylabel('True Label', fontsize=7)
+        ax.set_yticks(tick_marks)
+        ax.set_yticklabels(classes, fontsize=4, va='center')
+        ax.yaxis.set_label_position('left')
+        ax.yaxis.tick_left()
+
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            ax.text(j, i, format(cm[i, j], 'd') if cm[i, j] != 0 else '.',
+                    horizontalalignment="center", fontsize=6,
+                    verticalalignment='center', color="black")
+        fig.set_tight_layout(True)
+        return fig
 
     def fit(self,
             train_dataset: DataLoader,
@@ -166,6 +210,10 @@ class BaseModel(nn.Module):
 
         if seed is not None:
             torch.manual_seed(seed+3)
+
+        self.classes = list(set(train_dataset.dataset.labels))
+        self.classes.sort()
+        self.class_encoder = train_dataset.dataset.label_encoder
 
         writer = SummaryWriter(log_dir=log_dir)
 
@@ -216,15 +264,24 @@ class BaseModel(nn.Module):
                     dataset is not None}
         if concise:
             summary_stats = self.summary_helper(datasets, self.concise_summary)
-            extract_metrics = ['accuracy-global', 'avg-loss']
+            extract_metrics = ['accuracy-global', 'avg-loss',
+                               'confusion-matrix']
+            scalar_metrics = ['accuracy-global', 'avg-loss']
             reshaped_stats = dict()
             for metric in extract_metrics:
                 reshaped_stats[metric] = {dataset: summary_stats[dataset][
                     metric] for dataset in summary_stats}
-
+            for metric in scalar_metrics:
                 writer.add_scalars(metric,
                                    reshaped_stats[metric],
                                    counter)
+            # plot confusion matrix:
+            metric = 'confusion-matrix'
+            for dataset in ['train', 'val', 'ext']:
+                writer.add_figure('{}/{}'.format(metric, dataset),
+                                  reshaped_stats[metric][dataset],
+                                  counter)
+            
             for name, acc in reshaped_stats['accuracy-global'].items():
                 print("IT: {}, {} ACC: {}".format(counter,
                                                   name,
