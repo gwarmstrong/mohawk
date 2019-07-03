@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes, id_to_lineage
 from mohawk.dataset import SequenceDataset
@@ -21,6 +22,7 @@ def trainer(model: nn.Module,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
+            weight: Optional[bool] = False,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None):
@@ -77,26 +79,32 @@ def trainer(model: nn.Module,
                                                  random_seed=random_seed)
 
     # create Dataset and DataLoader for train and validation
-    train_dataloader = prep_dataloader(reads,
-                                       classes,
-                                       ids,
-                                       batch_size=batch_size,
-                                       indices=train_indices)
-    val_dataloader = prep_dataloader(reads,
-                                     classes,
-                                     ids,
-                                     batch_size=batch_size,
-                                     indices=val_indices)
+    train_dataloader = prepare_dataloader(reads,
+                                          classes,
+                                          ids,
+                                          batch_size=batch_size,
+                                          indices=train_indices)
+    val_dataloader = prepare_dataloader(reads,
+                                        classes,
+                                        ids,
+                                        batch_size=batch_size,
+                                        indices=val_indices)
     if external_validation:
-        external_dataloader = prep_dataloader(external_reads,
-                                              external_classes,
-                                              external_ids,
-                                              batch_size=batch_size)
+        external_dataloader = prepare_dataloader(external_reads,
+                                                 external_classes,
+                                                 external_ids,
+                                                 batch_size=batch_size)
     else:
         external_dataloader = None
 
+    if weight:
+        weights = prepare_weights(train_dataloader)
+    else:
+        weights = None
+
     training_model = model(length=length,
                            n_classes=len(set(classes)),
+                           weight=weights,
                            seed=random_seed,
                            **model_kwargs)
 
@@ -107,7 +115,7 @@ def trainer(model: nn.Module,
     if train_kwargs['gpu']:
         training_model.cuda()
 
-    # TODO have a seperate directory for finished model
+    # TODO have a separate directory for finished model
     # TODO as well as prefix/suffix option for naming
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
@@ -119,8 +127,17 @@ def trainer(model: nn.Module,
     return training_model
 
 
-def prep_dataloader(reads, classes, ids, indices=None, batch_size=1,
-                    shuffle=False):
+def prepare_weights(dataloader):
+    all_labels = dataloader.dataset.labels
+    all_labels = pd.Series(all_labels).value_counts().sort_index()
+    # will error if no labels present in training data for given class
+    inv = (1 / all_labels)
+    weights = inv / inv.sum()
+    return weights
+
+
+def prepare_dataloader(reads, classes, ids, indices=None, batch_size=1,
+                       shuffle=False):
     if indices is not None:
         components = prep_reads_classes_ids(reads, classes, ids,
                                             indices)

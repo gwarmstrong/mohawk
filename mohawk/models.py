@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
-from typing import Optional
+from typing import Optional, List
 from sklearn.metrics import f1_score, confusion_matrix
 import numpy as np
 import matplotlib.figure
@@ -166,6 +166,7 @@ class BaseModel(nn.Module):
         cm = cm.astype('int')
 
         np.set_printoptions(precision=2)
+        # TODO maybe increase dpi?
         fig = matplotlib.figure.Figure(figsize=(2, 2), dpi=320, facecolor='w',
                                        edgecolor='k')
 
@@ -191,8 +192,8 @@ class BaseModel(nn.Module):
 
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             ax.text(j, i, format(cm[i, j], 'd') if cm[i, j] != 0 else '.',
-                    horizontalalignment="center", fontsize=2,
-                    verticalalignment='center', color="black")
+                    horizontalalignment='center', fontsize=2,
+                    verticalalignment='center', color='black')
         fig.set_tight_layout(True)
         return fig
 
@@ -457,6 +458,7 @@ class ConvNetAvg(BaseModel):
     def __init__(self,
                  n_classes: int,
                  length: int,
+                 weight: Optional[List[float]] = None,
                  seed: Optional[int] = None,
                  ):
         super(ConvNetAvg, self).__init__(seed=seed)

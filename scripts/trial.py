@@ -50,15 +50,16 @@ validation_ids = [
 trial_directory = '../data/trial_download'
 n_samples = len(trial_ids)
 distribution = [1/n_samples] * n_samples
-total_reads = 20000 * 15  # * 10
+total_reads = 200#00 * 15  # * 10
 length = 150
 train_ratio = 0.8
 seed = 1234
 batch_size = 64
+weight = True
 
 external_validation_params = {
     'external_validation_ids': validation_ids,
-    'n_external_validation_reads': 200000,  # * 3,
+    'n_external_validation_reads': 20, # 0000,  # * 3,
     'external_validation_distribution': [1/6] * 6,  # TODO make safe to
     # changes in ids
 }
@@ -86,6 +87,7 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 model = trainer(ConvNetAvg, trial_ids, distribution, total_reads, length,
                 train_ratio, data_directory=trial_directory, random_seed=seed,
                 batch_size=batch_size,
+                weight=weight,
                 **external_validation_params,
                 train_kwargs=train_kwargs,
                 summary_kwargs=summary_kwargs)
