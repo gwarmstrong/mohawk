@@ -37,16 +37,6 @@ class SequenceDataset(Dataset):
         return len(self.classes)
 
     def __getitem__(self, idx):
-        # TODO could I remove `label_english`?
+        # TODO could save on some memory by not loading `label_english`
         return {'read': self.reads[idx], 'label': self.labels[idx],
                 'label_english': self.classes[idx]}
-
-
-# TODO could go
-def encode_classes(classes):
-    encoder = LabelEncoder()
-    new_classes = np.array(classes).reshape(-1, 1).ravel()
-    new_classes = encoder.fit_transform(new_classes)
-
-    return new_classes, encoder
-

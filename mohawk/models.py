@@ -389,8 +389,8 @@ class ConvNetAvg(BaseModel):
         self.optim = Adam
 
         dilations = [1, 2, 4, 8, 16]
-        channels = [4, 20, 40, 80, 100, 120] # first has to be 4
-        linear_sizes = [channels[-1], 200, 100, 50, n_classes]  # TODO how 119?
+        channels = [4, 20, 40, 80, 100, 120]  # first has to be 4
+        linear_sizes = [channels[-1], 200, 100, 50, n_classes]
         self.conv = nn.Sequential()
         for i, d in enumerate(dilations):
             self.conv.add_module('Conv_' + str(i),
