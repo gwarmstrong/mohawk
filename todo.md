@@ -26,14 +26,14 @@
 
 - [ ] more/better unit testing
 
-    - [ ] trial generation should be transitioned into a unit test
+    - [x] ~~trial generation should be transitioned into a unit test~~ made it into a script instead
    
     Files:  
     First pass 
     
     - [x] data_downloader.py
     
-    - [ ] dataset.py
+    - [x] dataset.py
     
     - [ ] models.py
     
@@ -51,7 +51,7 @@
     
     - [x] data_downloader.py
     
-    - [ ] dataset.py
+    - [x] dataset.py
     
     - [ ] models.py
     
@@ -125,13 +125,13 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 - [ ] write function to harvest nvidia-smi output throughout execution
 
-- [ ] Is there a way to do the evaluation with fewer forward passes?
+- [x] Is there a way to do the evaluation with fewer forward passes?
 
 - [ ] add summary scalars, such as learning rate, etc.
 
-- [ ] add confusion matrices ( https://stackoverflow.com/questions/41617463/tensorflow-confusion-matrix-in-tensorboard )
+- [x] add confusion matrices ( https://stackoverflow.com/questions/41617463/tensorflow-confusion-matrix-in-tensorboard )
 
-    - [ ] part of external validation not being as good could be explained by class imbalance
+    - part of external validation not being as good could be explained by class imbalance
     
 - [ ] try fully connected neural net on flattened channels 
 
@@ -141,6 +141,14 @@ that indicates it is getting data from ncbi, not _generating_ it
 - [ ] How to deal with reads of varying length?
     
     - [ ] Probably trimming ends/adding padding
+    
+- [x] Adjust for class imbalance
+    
+    - [x] can probably remove noise from multinomial for number of reads (better control)
+    
+    - [x] loss function adjustment by class ? 
+    
+- [ ] plot taxonomy on confusion matrix ?
 
 Week of 07/01 Major todo's:
 
