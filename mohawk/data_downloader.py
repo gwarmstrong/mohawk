@@ -12,7 +12,7 @@ def _ncbi_ftp_downloader(id_list: List[str],
                          genomes_metadata: pd.DataFrame,
                          genomes_directory: str) -> bool:
     """
-    Opens an FTP and downloads the genoms of all ids in `id_list`
+    Opens an FTP and downloads the genomes of all ids in `id_list`
     """
 
     ftp = FTP('ftp.ncbi.nih.gov')
@@ -110,10 +110,10 @@ def _get_ids_not_downloaded(id_list: List[str],
 
     """
 
-    # if fna_only, we are checking for ids to gunzip
+    # if fasta_only, we are checking for ids to gunzip
     # else, we are checking to see if we need to download the .gz file
     # results in the following truth table:
-    # to_download | .fna exists | .fna.gz exists | fna_only
+    # to_download | .fna exists | .fna.gz exists | fasta_only
     #       T     |      F      |        F       |    F
     #       F     |      F      |        T       |    F
     #       F     |      T      |        T       |    F
