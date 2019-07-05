@@ -4,7 +4,7 @@ import shutil
 import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
-from mohawk.utils import _ftp_path, get_fna_name, gz_stripper, \
+from mohawk.utils import _ftp_path, get_zipped_fasta_name, gz_stripper, \
     representative_genomes_file, complete_genomes_file
 
 
@@ -21,7 +21,7 @@ def _ncbi_ftp_downloader(id_list: List[str],
         abspath = _ftp_path(id_, genomes_metadata)
         ftp_dir = get_ftp_dir(abspath)
         ftp.cwd(ftp_dir)
-        filename = get_fna_name(id_, genomes_metadata)
+        filename = get_zipped_fasta_name(id_, genomes_metadata)
         local_dir = os.path.join(genomes_directory, id_, filename)
         ftp.retrbinary("RETR " + filename, open(local_dir, 'wb').write)
 
@@ -47,7 +47,7 @@ def _file_gunzipper(id_list: List[str],
     """Unzips the .gz file corresponding to each id in id_list"""
 
     for id_ in id_list:
-        filename = get_fna_name(id_, genomes_metadata)
+        filename = get_zipped_fasta_name(id_, genomes_metadata)
         fna_gz_filename = os.path.join(genomes_directory, id_, filename)
         fna_filename = gz_stripper(fna_gz_filename)
         _gunzip(fna_gz_filename, fna_filename)
@@ -81,7 +81,7 @@ def get_ftp_dir(abspath: str) -> str:
 def _get_ids_not_downloaded(id_list: List[str],
                             genomes_metadata: pd.DataFrame,
                             genomes_directory: Optional[str],
-                            fna_only: Optional[bool] = False) -> List[str]:
+                            fasta_only: Optional[bool] = False) -> List[str]:
     """Returns ID's from id_list that need to be downloaded/unzipped (do not
     already exist in `genomes_directory`)
 
@@ -93,7 +93,7 @@ def _get_ids_not_downloaded(id_list: List[str],
         Table containing metadata containing NCBI ID's and ftp links
     genomes_directory
         Directory to look for and save data into to
-    fna_only
+    fasta_only
         False if downloading, True if unzipping
 
     Returns
@@ -133,21 +133,21 @@ def _get_ids_not_downloaded(id_list: List[str],
     for id_ in id_list:
         expected_local_dir = os.path.join(genomes_directory,
                                           id_)
-        fna_gz_name = get_fna_name(id_, genomes_metadata)
-        fna_name = gz_stripper(fna_gz_name)
+        fasta_gz_name = get_zipped_fasta_name(id_, genomes_metadata)
+        fasta_name = gz_stripper(fasta_gz_name)
 
         try:
             existing_files = set(os.listdir(expected_local_dir))
-            fna_present = fna_name in existing_files
-            fna_gz_present = fna_gz_name in existing_files
+            fasta_present = fasta_name in existing_files
+            fasta_gz_present = fasta_gz_name in existing_files
             # the logic here is a little tricky, see note above
-            if not fna_only:
-                if not fna_present and not fna_gz_present:
+            if not fasta_only:
+                if not fasta_present and not fasta_gz_present:
                     ids_to_download.append(id_)
             else:
-                if not fna_present and fna_gz_present:
+                if not fasta_present and fasta_gz_present:
                     ids_to_download.append(id_)
-                elif not fna_present:
+                elif not fasta_present:
                     raise ValueError('Cannot gunzip when .gz file is not '
                                      'present, ID: {}'.format(id_))
 
@@ -209,11 +209,12 @@ def _ensure_all_data(id_list: List[str],
 
     # if .fna.gz files are not unzipped, unzip them
     ids_to_gunzip = _get_ids_not_downloaded(id_list, genomes_metadata,
-                                            genomes_directory, fna_only=True)
+                                            genomes_directory, fasta_only=True)
 
     _file_gunzipper(ids_to_gunzip, genomes_metadata, genomes_directory)
 
-    id_file_list = [(id_, gz_stripper(get_fna_name(id_, genomes_metadata)))
+    id_file_list = [(id_, gz_stripper(get_zipped_fasta_name(id_,
+                                                            genomes_metadata)))
                     for id_ in id_list]
 
     return [os.path.join(genomes_directory, *pair) for pair in id_file_list]
@@ -264,4 +265,3 @@ def data_downloader(genome_ids: List[str],
                                        genomes_directory)
 
     return fasta_filenames
-

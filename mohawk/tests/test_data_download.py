@@ -50,7 +50,7 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
             returned_ids = _get_ids_not_downloaded(['ExpB'],
                                                    self.genomes_metadata,
                                                    self.genomes_directory,
-                                                   fna_only=True)
+                                                   fasta_only=True)
         self.assertCountEqual(returned_ids, ['ExpB'])
 
     def test_get_ids_simple_fna_only_fna_present(self):
@@ -59,7 +59,7 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
             returned_ids = _get_ids_not_downloaded(['ExpA'],
                                                    self.genomes_metadata,
                                                    self.genomes_directory,
-                                                   fna_only=True)
+                                                   fasta_only=True)
         self.assertCountEqual(returned_ids, [])
 
     def test_get_ids_simple_fna_only_neither_present(self):
@@ -70,6 +70,4 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
                 _get_ids_not_downloaded(['ExpA'],
                                         self.genomes_metadata,
                                         self.genomes_directory,
-                                        fna_only=True)
-
-
+                                        fasta_only=True)
