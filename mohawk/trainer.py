@@ -36,7 +36,7 @@ def trainer(model: nn.Module,
         summary_kwargs = dict()
 
     data_downloader(id_list,
-                    genomes_directory=data_directory,
+                    output_directory=data_directory,
                     channel=channel)
 
     reads, ids = simulate_from_genomes(id_list, distribution, total_reads,
@@ -53,7 +53,7 @@ def trainer(model: nn.Module,
             n_external_validation_reads is not None and \
             external_validation_distribution is not None:
         data_downloader(external_validation_ids,
-                        genomes_directory=data_directory,
+                        output_directory=data_directory,
                         channel=channel)
         external_reads, external_ids = simulate_from_genomes(
             external_validation_ids,
