@@ -47,8 +47,8 @@ def representative_genomes_file() -> BufferedReader:
         If unable to find the resource
 
     """
-    return _safe_fetch_resource_stream(
-        ('mohawk.resources', 'refseq_representative_genomes_ftp.txt'))
+    return _fetch_resource_stream('mohawk.resources',
+                                  'refseq_representative_genomes_ftp.txt')
 
 
 def complete_genomes_file() -> BufferedReader:
@@ -69,22 +69,23 @@ def complete_genomes_file() -> BufferedReader:
 
     """
 
-    return _safe_fetch_resource_stream(('mohawk.resources',
-                                        'refseq_complete_genomes_ftp.txt'))
+    return _fetch_resource_stream('mohawk.resources',
+                                  'refseq_complete_genomes_ftp.txt')
 
 
 def representative_genomes_lineage():
-    return _safe_fetch_resource_stream(
-        ('mohawk.resources', 'refseq_representative_genomes_lineage.txt'))
+    return _fetch_resource_stream('mohawk.resources',
+                                  'refseq_representative_genomes_lineage.txt')
 
 
 def complete_genomes_lineage():
-    return _safe_fetch_resource_stream(('mohawk.resources',
-                                        'refseq_complete_genomes_lineage.txt'))
+    return _fetch_resource_stream('mohawk.resources',
+                                  'refseq_complete_genomes_lineage.txt')
 
 
-def _safe_fetch_resource_stream(args):
-    if resource_exists(*args):
-        return resource_stream(*args)
+def _fetch_resource_stream(location, name):
+    if resource_exists(location, name):
+        return resource_stream(location, name)
     else:
-        raise IOError('Unable to find package resource {}'.format(args))
+        raise IOError('Unable to find package resource {}. Please run '
+                      '`setup_genome_downloads.py`.'.format((location, name)))

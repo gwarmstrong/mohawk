@@ -72,7 +72,8 @@ def setup_genome_downloads(base_dir=None):
     included_in_refseq_info.drop('infraspecific_name', axis=1, inplace=True)
     full_lineage_info = included_in_refseq_info.join(lineage_df)
 
-    # full_lineage_info.to_csv('refseq_complete_genomes_taxonomy.txt', sep='\t')
+    # full_lineage_info.to_csv('refseq_complete_genomes_taxonomy.txt',
+    #                          sep='\t')
 
     full_lineage_info['fna_gz_name'] = [ftp_dir.split('/')[-1] +
                                         '_genomic.fna.gz' for ftp_dir in

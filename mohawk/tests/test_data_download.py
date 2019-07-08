@@ -20,7 +20,7 @@ class TestGetFTPDir(unittest.TestCase):
 class TestGetIdsNotDownLoaded(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.id_list = ['ExpA', 'ExpB']
+        self.id_list = ['Assembly_A', 'Assembly_B']
         self.genomes_metadata = pd.DataFrame({'ftp_path': [
             'ftp://path/to/ftp/id_A', 'ftp://path/to/ftp/id_B'],
             'fna_gz_name': ['id_A_genomic.fna.gz', 'id_B_genomic.fna.gz']},
@@ -33,7 +33,7 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
             returned_ids = _get_ids_not_downloaded(self.id_list,
                                                    self.genomes_metadata,
                                                    self.genomes_directory)
-        self.assertCountEqual(returned_ids, ['ExpA'])
+        self.assertCountEqual(returned_ids, ['Assembly_A'])
 
     def test_has_fna(self):
         with mock.patch('os.listdir') as mocked_listdir:
@@ -47,19 +47,19 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
     def test_get_ids_simple_fna_only_gz_present(self):
         with mock.patch('os.listdir') as mocked_listdir:
             mocked_listdir.return_value = ['id_B_genomic.fna.gz']
-            returned_ids = _get_ids_not_downloaded(['ExpB'],
+            returned_ids = _get_ids_not_downloaded(['Assembly_B'],
                                                    self.genomes_metadata,
                                                    self.genomes_directory,
-                                                   fasta_only=True)
-        self.assertCountEqual(returned_ids, ['ExpB'])
+                                                   to_unzip=True)
+        self.assertCountEqual(returned_ids, ['Assembly_B'])
 
     def test_get_ids_simple_fna_only_fna_present(self):
         with mock.patch('os.listdir') as mocked_listdir:
             mocked_listdir.return_value = ['id_A_genomic.fna']
-            returned_ids = _get_ids_not_downloaded(['ExpA'],
+            returned_ids = _get_ids_not_downloaded(['Assembly_A'],
                                                    self.genomes_metadata,
                                                    self.genomes_directory,
-                                                   fasta_only=True)
+                                                   to_unzip=True)
         self.assertCountEqual(returned_ids, [])
 
     def test_get_ids_simple_fna_only_neither_present(self):
@@ -67,7 +67,7 @@ class TestGetIdsNotDownLoaded(unittest.TestCase):
             mocked_listdir.return_value = []
             with self.assertRaisesRegex(ValueError, r'Cannot gunzip when .gz '
                                                     r'file is not present'):
-                _get_ids_not_downloaded(['ExpA'],
+                _get_ids_not_downloaded(['Assembly_A'],
                                         self.genomes_metadata,
                                         self.genomes_directory,
-                                        fasta_only=True)
+                                        to_unzip=True)

@@ -81,7 +81,7 @@ def get_ftp_dir(abspath: str) -> str:
 def _get_ids_not_downloaded(id_list: List[str],
                             genomes_metadata: pd.DataFrame,
                             genomes_directory: Optional[str],
-                            fasta_only: Optional[bool] = False) -> List[str]:
+                            to_unzip: Optional[bool] = False) -> List[str]:
     """Returns ID's from id_list that need to be downloaded/unzipped (do not
     already exist in `genomes_directory`)
 
@@ -93,7 +93,7 @@ def _get_ids_not_downloaded(id_list: List[str],
         Table containing metadata containing NCBI ID's and ftp links
     genomes_directory
         Directory to look for and save data into to
-    fasta_only
+    to_unzip
         False if downloading, True if unzipping
 
     Returns
@@ -126,6 +126,7 @@ def _get_ids_not_downloaded(id_list: List[str],
     # and is asked whether it should gunzip the .fna.gz, likely indicates a
     # failed download earlier on
 
+    # default save data in current directory
     if genomes_directory is None:
         genomes_directory = os.path.curdir()
 
@@ -136,14 +137,19 @@ def _get_ids_not_downloaded(id_list: List[str],
         fasta_gz_name = get_zipped_fasta_name(id_, genomes_metadata)
         fasta_name = gz_stripper(fasta_gz_name)
 
+        # will fail if the directory is not found
         try:
             existing_files = set(os.listdir(expected_local_dir))
+            # TODO play with logic for readability
             fasta_present = fasta_name in existing_files
             fasta_gz_present = fasta_gz_name in existing_files
             # the logic here is a little tricky, see note above
-            if not fasta_only:
+            # TODO maybe flip clauses
+            #  if need to download?
+            if not to_unzip:
                 if not fasta_present and not fasta_gz_present:
                     ids_to_download.append(id_)
+            # if we need to unzip?
             else:
                 if not fasta_present and fasta_gz_present:
                     ids_to_download.append(id_)
@@ -153,7 +159,7 @@ def _get_ids_not_downloaded(id_list: List[str],
 
         # if the directory does not exist, then create a directory for it
         # and add the id to the download list
-        # TODO: more specific error catching?
+        # TODO: more specific error catching? or if statement for os.isdir?
         except FileNotFoundError:
             os.makedirs(expected_local_dir, exist_ok=True)
             ids_to_download.append(id_)
@@ -163,7 +169,7 @@ def _get_ids_not_downloaded(id_list: List[str],
 
 def _ensure_all_data(id_list: List[str],
                      genomes_metadata: pd.DataFrame,
-                     genomes_directory: Optional[str]) -> List[str]:
+                     output_directory: str) -> List[str]:
     """
 
     Parameters
@@ -172,7 +178,7 @@ def _ensure_all_data(id_list: List[str],
         A list of assembly accession id's to ensure from NCBI
     genomes_metadata
         Table containing metadata containing NCBI ID's and ftp links
-    genomes_directory
+    output_directory
         Directory to look for and save data into to
 
     Returns
@@ -189,39 +195,29 @@ def _ensure_all_data(id_list: List[str],
 
     """
 
-    if genomes_directory is None:
-        genomes_directory = os.path.curdir()
-
-    possible_ids = set(genomes_metadata.index)
-    for id_ in id_list:
-        if id_ not in possible_ids:
-            raise ValueError('Invalid assembly accession ID for this '
-                             'channel: {}'.format(id_))
-
     ids_to_download = _get_ids_not_downloaded(id_list,
                                               genomes_metadata,
-                                              genomes_directory)
+                                              output_directory)
 
     # download .fna.gz files we do not have (do not need to download if
     # .fna exists)
-
-    _ncbi_ftp_downloader(ids_to_download, genomes_metadata, genomes_directory)
+    _ncbi_ftp_downloader(ids_to_download, genomes_metadata, output_directory)
 
     # if .fna.gz files are not unzipped, unzip them
     ids_to_gunzip = _get_ids_not_downloaded(id_list, genomes_metadata,
-                                            genomes_directory, fasta_only=True)
+                                            output_directory, to_unzip=True)
 
-    _file_gunzipper(ids_to_gunzip, genomes_metadata, genomes_directory)
+    _file_gunzipper(ids_to_gunzip, genomes_metadata, output_directory)
 
     id_file_list = [(id_, gz_stripper(get_zipped_fasta_name(id_,
                                                             genomes_metadata)))
                     for id_ in id_list]
 
-    return [os.path.join(genomes_directory, *pair) for pair in id_file_list]
+    return [os.path.join(output_directory, *pair) for pair in id_file_list]
 
 
 def data_downloader(genome_ids: List[str],
-                    genomes_directory: Optional[str] = None,
+                    output_directory: Optional[str] = None,
                     channel: Optional[str] = 'representative') -> List[str]:
     """
 
@@ -229,9 +225,10 @@ def data_downloader(genome_ids: List[str],
     ----------
     genome_ids
         A list of assembly accession id's to ensure from NCBI
-    genomes_directory
+    output_directory
         Directory to look for and save data into to
-    channel
+    channel, optional
+        # numpy docs style ?
         Choice between 'representative' and 'complete', describing criteria
         NCBI genomes must meet to download
 
@@ -259,9 +256,18 @@ def data_downloader(genome_ids: List[str],
         raise ValueError("Invalid choice for `channel`. Options are "
                          "'representative' and 'complete'.")
 
+    if output_directory is None:
+        output_directory = os.path.curdir()
+
+    possible_ids = set(genomes_metadata.index)
+    for id_ in genome_ids:
+        if id_ not in possible_ids:
+            raise ValueError('Invalid assembly accession ID for this '
+                             'channel: {}'.format(id_))
+
     # make sure all genomes are downloaded (download if not)
     fasta_filenames = _ensure_all_data(genome_ids,
                                        genomes_metadata,
-                                       genomes_directory)
+                                       output_directory)
 
     return fasta_filenames

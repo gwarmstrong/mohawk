@@ -22,7 +22,7 @@
 
 - [x] start writing models
 
-- [ ] ~~make data_downloader object oriented?~~
+- [x] ~~make data_downloader object oriented?~~ fine without
 
 - [ ] more/better unit testing
 
@@ -67,7 +67,7 @@
     
 - [ ] transition trial.py into `click`-based CLI
 
-- [ ] at least move both (all 4) resource loaders into their own file
+- [x] at least move both (all 4) resource loaders into their own file
 
 - [x] consider renaming data_generator to something else: like data_downloader
 that indicates it is getting data from ncbi, not _generating_ it
@@ -121,8 +121,6 @@ that indicates it is getting data from ncbi, not _generating_ it
 
 - [ ] classify all levels at one?
 
-- [ ] Do I need to support unzipping or can skbio read zipped?
-
 - [ ] write function to harvest nvidia-smi output throughout execution
 
 - [x] Is there a way to do the evaluation with fewer forward passes?
@@ -150,10 +148,16 @@ that indicates it is getting data from ncbi, not _generating_ it
     
 - [ ] plot taxonomy on confusion matrix ?
 
-Week of 07/01 Major todo's:
+- [x] ~~remove unzipping part, since `skbio.io.read` can handle zipped files~~ had some issues so abandoned
 
-- [ ] Add more unit tests
+- [x] Add more unit tests
 
-- [ ] Project summary
+- [x] Project summary
 
 - [x] remedy memory ballooning 
+
+- [ ] draft benchmarks
+
+- [ ] train on more genomes
+
+- [ ] potential: classify at multiple levels (e.g., 50% genus, 20% spec1, 20% spec2, 10% unknown)
