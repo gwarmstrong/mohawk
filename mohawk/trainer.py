@@ -105,9 +105,7 @@ def trainer(model: BaseModel,
     else:
         weights = None
 
-    training_model = model(length=length,
-                           n_classes=len(set(classes)),
-                           weight=weights,
+    training_model = model(n_classes=len(set(classes)),
                            seed=random_seed,
                            **model_kwargs)
 
@@ -142,8 +140,11 @@ def prepare_weights(dataloader):
     return weights
 
 
-def prepare_dataloader(reads, classes, ids, indices=None, batch_size=1,
+def prepare_dataloader(reads, classes=None, ids=None, indices=None,
+                       batch_size=1,
                        shuffle=False):
+    # TODO right now, cannot use NONE for classes and ids if indices is not
+    #  None -> should fix this so subsetting can be done of classificaiton data
     if indices is not None:
         components = prep_reads_classes_ids(reads, classes, ids,
                                             indices)
