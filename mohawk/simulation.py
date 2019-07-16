@@ -56,6 +56,7 @@ def simulate_from_genomes(id_list: List[str],
 
     reads = np.vstack(all_reads)
 
+    # TODO comment this with helpful comment
     ids = [id_ for id_, depth in zip(id_list, id_depths) for _ in
            range(depth)]
 
