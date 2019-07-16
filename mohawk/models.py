@@ -218,7 +218,6 @@ class BaseModel(nn.Module):
              log_dir: Optional[str] = None,
              optimizer: Optional[torch.nn.Module] = None):
 
-        print(self.__class__)
         checkpoint = {'model': self.reinitialize(),
                       'model_state_dict': self.state_dict()}
 
@@ -249,6 +248,7 @@ class BaseModel(nn.Module):
             log_dir: Optional[str] = None,
             epochs: int = 1000,
             summary_interval: int = 10,
+            save_interval: Optional[int] = None,
             learning_rate: float = 0.0001,
             gpu: bool = False,
             summarize: bool = True,
@@ -261,12 +261,15 @@ class BaseModel(nn.Module):
         if seed is not None:
             torch.manual_seed(seed+3)
 
+        save_model = save_interval is not None
+
         self.classes = list(set(train_dataset.dataset.labels))
         self.classes.sort()
         self.class_encoder = train_dataset.dataset.label_encoder
 
         log_dir = self.get_log_dir(log_dir)
         writer = SummaryWriter(log_dir=log_dir)
+        model_dir = os.path.join(log_dir, 'models')
 
         optimizer = self.optim(self.parameters(),
                                lr=learning_rate,
@@ -295,6 +298,12 @@ class BaseModel(nn.Module):
                                val_dataset=val_dataset,
                                external_dataset=external_dataset,
                                **summary_kwargs)
+
+            if save_model and (index_epoch % save_interval == 0):
+                self.save(epoch=index_epoch,
+                          seed=seed,
+                          log_dir=model_dir,
+                          optimizer=optimizer)
 
         writer.close()
 
