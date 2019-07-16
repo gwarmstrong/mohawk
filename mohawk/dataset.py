@@ -3,6 +3,8 @@ from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import numpy as np
 
 
+# TODO PredictionOnlySequenceDataset: doesn't store info only needed for
+#  training, only hangs onto the reads
 class SequenceDataset(Dataset):
     """
     Dataset that prepares a set of quaternary sequences into matrices of
@@ -69,8 +71,9 @@ class SequenceDataset(Dataset):
     """
 
     def __init__(self, sequences, classes=None, ids=None):
-        if len(sequences) != len(classes):
-            raise ValueError("There must be one class for every read.")
+        if classes is not None and len(sequences) != len(classes):
+            raise ValueError("If classes are specified, there must be one "
+                             "class for every read.")
 
         sequence_length = len(sequences[0])
 
@@ -93,7 +96,14 @@ class SequenceDataset(Dataset):
         if classes is not None:
             labels = label_enc.fit_transform(classes)
         else:
+            # TODO warning regarding having no classes
             labels = np.zeros(len(reads_matrices))
+            classes = np.zeros(len(reads_matrices))
+
+        if ids is None:
+            ids = np.zeros(len(reads_matrices))
+
+        # print("ids: {}".format(ids))
 
         self.reads = reads_matrices
         self.labels = labels
@@ -103,9 +113,11 @@ class SequenceDataset(Dataset):
         self.ids = ids
 
     def __len__(self):
-        return len(self.classes)
+        return len(self.reads)
 
     def __getitem__(self, idx):
         # TODO could save on some memory by not loading `label_english`
-        return {'read': self.reads[idx], 'label': self.labels[idx],
+        return {'read': self.reads[idx],
+                'label': self.labels[idx],
+                'id': self.ids[idx],
                 'label_english': self.classes[idx]}
