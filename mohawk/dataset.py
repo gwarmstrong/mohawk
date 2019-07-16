@@ -68,7 +68,7 @@ class SequenceDataset(Dataset):
 
     """
 
-    def __init__(self, sequences, classes, ids):
+    def __init__(self, sequences, classes=None, ids=None):
         if len(sequences) != len(classes):
             raise ValueError("There must be one class for every read.")
 
@@ -90,8 +90,10 @@ class SequenceDataset(Dataset):
                           for seq in reads_transformed]
 
         label_enc = LabelEncoder()
-
-        labels = label_enc.fit_transform(classes)
+        if classes is not None:
+            labels = label_enc.fit_transform(classes)
+        else:
+            labels = np.zeros(len(reads_matrices))
 
         self.reads = reads_matrices
         self.labels = labels
