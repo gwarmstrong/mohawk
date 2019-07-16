@@ -202,12 +202,13 @@ class BaseModel(nn.Module):
         return fig
 
     @staticmethod
-    def get_log_dir(log_dir):
+    def get_log_dir(log_dir, append_time=True):
         if log_dir is None:
             log_dir = os.path.curdir
-        current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-        log_dir = os.path.join(
-            log_dir, current_time + '_' + socket.gethostname())
+        if append_time:
+            current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+            log_dir = os.path.join(
+                log_dir, current_time + '_' + socket.gethostname())
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
         return log_dir
@@ -233,7 +234,10 @@ class BaseModel(nn.Module):
             checkpoint.update({'seed': seed})
             suffix += '_seed_{}'.format(seed)
 
-        log_dir = self.get_log_dir(log_dir)
+        if self.class_encoder is not None:
+            checkpoint.update({'class_encoder': self.class_encoder})
+
+        log_dir = self.get_log_dir(log_dir, append_time=False)
 
         model_filepath = os.path.join(log_dir,
                                       'trained_model' + suffix + '.mod')
