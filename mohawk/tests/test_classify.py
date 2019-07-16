@@ -20,6 +20,13 @@ class TestClassifyHelpers(unittest.TestCase):
                          [0, 3, 1],
                          [0, 2, 1],
                          [0, 2, 0]]
-        expected_ids = ['seq1'] * 5 + ['seq2'] + ['seq3']
-        self.assertListEqual(seqs, expected_seqs)
+        expected_ids = ['seq1__idx_0',
+                        'seq1__idx_1',
+                        'seq1__idx_2',
+                        'seq1__idx_3',
+                        'seq1__idx_4',
+                        'seq2__idx_0',
+                        'seq3__idx_0']
+        list_seqs = [[l1 for l1 in l2] for l2 in seqs]
+        self.assertListEqual(list_seqs, expected_seqs)
         self.assertListEqual(ids, expected_ids)
