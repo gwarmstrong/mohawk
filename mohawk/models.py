@@ -23,8 +23,12 @@ class BaseModel(nn.Module):
         self.classes = None
         self.device = None
         self.class_encoder = None
+        self.seed = seed
         if seed is not None:
-            torch.manual_seed(seed+2)
+            torch.manual_seed(self.seed+2)
+
+    def reinitialize(self):
+        pass
 
     def forward(self, data):
         pass
@@ -199,11 +203,43 @@ class BaseModel(nn.Module):
 
     @staticmethod
     def get_log_dir(log_dir):
-        if log_dir is not None:
-            current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            log_dir = os.path.join(
-                log_dir, current_time + '_' + socket.gethostname())
+        if log_dir is None:
+            log_dir = os.path.curdir
+        current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+        log_dir = os.path.join(
+            log_dir, current_time + '_' + socket.gethostname())
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
         return log_dir
+
+    def save(self,
+             epoch: Optional[int] = None,
+             seed: Optional[int] = None,
+             log_dir: Optional[str] = None,
+             optimizer: Optional[torch.nn.Module] = None):
+
+        print(self.__class__)
+        checkpoint = {'model': self.reinitialize(),
+                      'model_state_dict': self.state_dict()}
+
+        if optimizer is not None:
+            checkpoint.update({'optimizer_state_dict': optimizer.state_dict()})
+
+        suffix = ''
+        if epoch is not None:
+            checkpoint.update({'epoch': epoch})
+            suffix += '_epoch_{}'.format(epoch)
+
+        if seed is not None:
+            checkpoint.update({'seed': seed})
+            suffix += '_seed_{}'.format(seed)
+
+        log_dir = self.get_log_dir(log_dir)
+
+        model_filepath = os.path.join(log_dir,
+                                      'trained_model' + suffix + '.mod')
+
+        torch.save(checkpoint, model_filepath)
 
     def fit(self,
             train_dataset: DataLoader,
@@ -372,6 +408,10 @@ class SmallConvNet(BaseModel):
                  ):
         super(SmallConvNet, self).__init__(seed=seed)
 
+        self.n_classes = n_classes
+        self.length = length
+        self.seed = seed
+
         self.conv1_kernel_size = 7
         self.n_bases = 4
         self.n_filters = 11
@@ -389,6 +429,11 @@ class SmallConvNet(BaseModel):
         self.optim = Adam
         self.loss_fn = CrossEntropyLoss(reduction='sum')
         self.device = None
+
+    def reinitialize(self):
+        return self.__class__(n_classes=self.n_classes,
+                              length=self.length,
+                              seed=self.seed)
 
     def forward(self, data):
 
@@ -414,13 +459,12 @@ class SmallConvNet(BaseModel):
 class ConvNet2(BaseModel):
     def __init__(self,
                  n_classes: int,
-                 length: int,
-                 seed: Optional[int] = None,
-                 ):
+                 seed: Optional[int] = None):
         super(ConvNet2, self).__init__(seed=seed)
 
         self.loss_fn = CrossEntropyLoss(reduction='sum')
         self.optim = Adam
+        self.n_classes = n_classes
 
         dilations = [1, 2, 4, 8, 16]
         channels = [4, 8, 16, 8, 4, 1]
@@ -447,6 +491,9 @@ class ConvNet2(BaseModel):
             else:
                 self.fc.add_module('Softmax', nn.Softmax(dim=1))
 
+    def reinitialize(self):
+        return self.__class__(n_classes=self.n_classes, seed=self.seed)
+
     def forward(self, data):
         x = self.conv(data)
         x = x.view(x.size(0), -1)
@@ -457,14 +504,13 @@ class ConvNet2(BaseModel):
 class ConvNetAvg(BaseModel):
     def __init__(self,
                  n_classes: int,
-                 length: int,
-                 weight: Optional[List[float]] = None,
                  seed: Optional[int] = None,
                  ):
         super(ConvNetAvg, self).__init__(seed=seed)
 
         self.loss_fn = CrossEntropyLoss(reduction='sum')
         self.optim = Adam
+        self.n_classes = n_classes
 
         dilations = [1, 2, 4, 8, 16]
         channels = [4, 20, 40, 80, 100, 120]  # first has to be 4
@@ -490,6 +536,9 @@ class ConvNetAvg(BaseModel):
                 self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
             else:
                 self.fc.add_module('Softmax', nn.Softmax(dim=1))
+
+    def reinitialize(self):
+        return self.__class__(n_classes=self.n_classes, seed=self.seed)
 
     def forward(self, data):
         x = self.conv(data)
