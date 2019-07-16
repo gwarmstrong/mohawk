@@ -4,11 +4,11 @@ from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes, id_to_lineage
 from mohawk.dataset import SequenceDataset
 from typing import Optional, List
-from torch import nn
+from mohawk.models import BaseModel
 from torch.utils.data import DataLoader
 
 
-def trainer(model: nn.Module,
+def trainer(model: BaseModel,
             id_list: List[str],
             distribution: List[float],
             total_reads: int,
@@ -62,7 +62,7 @@ def trainer(model: nn.Module,
             length,
             channel,  # presumably should be available in the same channel
             data_directory,
-            random_seed + 5,
+            random_seed + 5,  # TODO I think this will error if given None
             distribution_noise=distribution_noise
             )
 
@@ -118,7 +118,7 @@ def trainer(model: nn.Module,
     if train_kwargs['gpu']:
         training_model.cuda()
 
-    # TODO have a separate directory for finished model
+    # TODO have a separate directory for trained models
     # TODO as well as prefix/suffix option for naming
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
@@ -126,6 +126,9 @@ def trainer(model: nn.Module,
                        seed=random_seed,
                        summary_kwargs=summary_kwargs,
                        **train_kwargs)
+
+    # TODO maybe some functionality for holding onto the best model
+    #  parameters ? -> I think would entail making a deepcopy of best
 
     return training_model
 
