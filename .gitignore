@@ -109,6 +109,12 @@ venv.bak/
 # vim
 *.swp
 
+# pycharm
+.idea/
+
+# ignore my notes
+notes/
+
 # data for this project
 data/
 mohawk/resources/*.txt
