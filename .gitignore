@@ -118,3 +118,4 @@ notes/
 # data for this project
 data/
 mohawk/resources/*.txt
+runs/
