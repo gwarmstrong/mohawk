@@ -113,7 +113,7 @@ def ensure_lengths(encoded, length, pad_value=0):
 
 def load_trained_model(filepath):
     # filepath has to be a path to a model saved with
-    checkpoint = torch.load(filepath)
+    checkpoint = torch.load(filepath, map_location='cpu')
     model = checkpoint['model']
     model.load_state_dict(checkpoint['model_state_dict'])
 
