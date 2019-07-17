@@ -714,9 +714,10 @@ class ConvNetAvg5(BaseModel):
         self.optim = Adam
         self.n_classes = n_classes
 
-        dilations = [1, 4, 16]
+        dilations = [1, 1, 1]  # end up looking at 64-mers
         # how many distinguishing patterns of length would we expect?
-        channels = [4, 16, 100, 500]  # first has to be 4
+        channels = [4, 16, 100, 500]  # first has to be 4 # basically says
+        # there might be some combination of 500 distingushing patterns
         linear_sizes = [channels[-1], 500, 200, 100, 50, n_classes]
         self.conv = nn.Sequential()
         for i, d in enumerate(dilations):
@@ -729,7 +730,10 @@ class ConvNetAvg5(BaseModel):
                                            dilation=d
                                            )
                                  )
-            self.conv.add_module('Conv_' + str(i)+'_relu', nn.ReLU())
+            self.conv.add_module('Conv_' + str(i) + '_relu', nn.ReLU())
+
+            this_max_pool = nn.MaxPool1d(4, stride=4)
+            self.conv.add_module('Conv_' + str(i) + '_pool', this_max_pool)
 
         self.fc = nn.Sequential()
         for i in range(1, len(linear_sizes)):
@@ -748,6 +752,6 @@ class ConvNetAvg5(BaseModel):
     def forward(self, data):
         x = self.conv(data)
         # TODO pool across channel opposed to across sequence
-        x = x.mean(-1)
+        x = x.max(-1).values
         x = self.fc(x)
         return x
