@@ -568,7 +568,7 @@ class ConvNetAvg2(BaseModel):
                  n_classes: int,
                  seed: Optional[int] = None,
                  ):
-        super(ConvNetAvg, self).__init__(seed=seed)
+        super(ConvNetAvg2, self).__init__(seed=seed)
 
         self.loss_fn = CrossEntropyLoss(reduction='sum')
         self.optim = Adam
@@ -614,7 +614,7 @@ class ConvNetAvg3(BaseModel):
                  n_classes: int,
                  seed: Optional[int] = None,
                  ):
-        super(ConvNetAvg, self).__init__(seed=seed)
+        super(ConvNetAvg3, self).__init__(seed=seed)
 
         self.loss_fn = CrossEntropyLoss(reduction='sum')
         self.optim = Adam
