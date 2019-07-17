@@ -341,7 +341,10 @@ class BaseModel(nn.Module):
                                    counter)
             # plot confusion matrix:
             metric = 'confusion-matrix'
-            for dataset in ['train', 'val', 'ext']:
+            datasets = ['train', 'val']
+            if external_dataset is not None:
+                datasets.append('ext')
+            for dataset in datasets:
                 writer.add_figure('{}/{}'.format(metric, dataset),
                                   reshaped_stats[metric][dataset],
                                   counter)
