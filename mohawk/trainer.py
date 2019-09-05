@@ -9,6 +9,7 @@ from mohawk.models import BaseModel
 from torch.utils.data import DataLoader
 
 
+# TODO current file_list, taxonomy setup needs to be re-worked...
 def trainer(model: BaseModel, distribution: List[float], total_reads: int,
             length: int, train_ratio: float,
             id_list: Optional[List[str]],
@@ -24,7 +25,8 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
             distribution_noise: Optional[bool] = True,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
-            summary_kwargs: Optional[dict] = None):
+            summary_kwargs: Optional[dict] = None,
+            taxonomy_mapping: Optional[str] = None):
 
     if model_kwargs is None:
         model_kwargs = dict()
@@ -35,23 +37,41 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
 
     # If id_list is not None, use the specified id's
     if id_list is not None:
+        # TODO WARN if taxonomy_mapping is not None
         file_list = data_downloader(id_list,
                                     output_directory=data_directory,
                                     channel=channel)
     # if id_list _is_ None, just use whatever is in the directory (handled
     # by simulate_from_genomes)
     # TODO may need some error catching for if data_directory is empty
-    else:
+    elif taxonomy_mapping is not None:
         file_list = [os.path.join(data_directory, file_) for file_ in
                      os.listdir(data_directory)]
+    else:
+        raise ValueError('A value must be supplied for taxonomy_mapping if '
+                         'id_list is None')
 
-                 # TODO flat directory structure for data_directory
+    # TODO ids returning in simulate_from_genomes should be better
+    # formally "simualte_from_genomes" makes brittle assumptions about file
+    # naming conventions
     reads, ids = simulate_from_genomes(distribution, total_reads, length,
                                        file_list, channel, data_directory,
                                        random_seed,
                                        distribution_noise=distribution_noise)
 
-    classes = id_to_lineage(ids, level, channel)
+    # remap ids based on naming convention.... if we downloaded, we know the
+    # id is the second to last
+
+    # TODO this may be brittle...
+    if id_list is not None:
+        # grab ids by stripping it from second to last part of filepath
+        ids = [id_.split(os.sep)[-2] for id_ in ids]
+        classes = id_to_lineage(ids, level, channel)
+    else:
+        # we know taxonomy_mapping is not None since we checked earlier
+        # grab ids by stripping it from part of filename before .fna
+        ids = [id_.split(os.sep)[-1][:-4] for id_ in ids]
+        classes = id_to_lineage(ids, level, taxonomy_mapping)
 
     # TODO maybe prep external validation function ?
     external_validation = False

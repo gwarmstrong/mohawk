@@ -98,6 +98,8 @@ def id_to_lineage(ids: List[str],
     elif channel == 'complete':
         lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
                                    index_col=0)
+    elif os.path.isfile(channel):
+        lineage_info = pd.read_csv(channel, sep='\t', index_col=0)
     else:
         raise ValueError("Invalid choice for `channel`. Options are "
                          "'representative' and 'complete'.")
