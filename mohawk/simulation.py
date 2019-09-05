@@ -25,9 +25,11 @@ def simulate_from_genomes(distribution: List[float], total_reads: int,
     elif channel == 'complete':
         lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
                                    index_col=0)
+    elif os.path.isfile(channel):
+        lineage_info = pd.read_csv(channel, sep='\t', index_col=0)
     else:
         raise ValueError("Invalid choice for `channel`. Options are "
-                         "'representative' and 'complete'.")
+                         "'representative', 'complete', or a filepath.")
     if random_seed is not None:
         np.random.seed(random_seed)
     random_func = np.random.randint
