@@ -74,15 +74,9 @@ summary_kwargs = {'concise': True}
 
 print("CUDA available: {}".format(train_kwargs['gpu']))
 
-model = trainer(ConvNetAvg, train_ids, distribution, total_reads, length,
-                train_ratio,
-                channel=channel,
-                data_directory=trial_directory,
-                random_seed=seed,
-                level=level,
-                batch_size=batch_size,
-                weight=weight,
-                distribution_noise=distribution_noise,
-                train_kwargs=train_kwargs,
-                summary_kwargs=summary_kwargs)
+model = trainer(ConvNetAvg, distribution, total_reads, length, train_ratio,
+                train_ids, level=level, channel=channel, batch_size=batch_size,
+                data_directory=trial_directory, random_seed=seed,
+                weight=weight, distribution_noise=distribution_noise,
+                train_kwargs=train_kwargs, summary_kwargs=summary_kwargs)
 print(model)

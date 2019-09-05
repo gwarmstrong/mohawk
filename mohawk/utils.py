@@ -20,6 +20,7 @@ def gz_stripper(filename: str) -> str:
         return filename
 
 
+# TODO flat directory structure
 def full_fna_path(sequence_directory, id_, lineage_info):
     fasta_gz_name = get_zipped_fasta_name(id_, lineage_info)
     fasta_name = gz_stripper(fasta_gz_name)

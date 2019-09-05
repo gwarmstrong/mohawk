@@ -9,18 +9,19 @@ from mohawk.utils import full_fna_path, _get_taxonomy, \
 from mohawk._format import sample_from_contig_set
 
 
-def simulate_from_genomes(id_list: List[str],
-                          distribution: List[float],
-                          total_reads: int,
+# TODO flat directory structure for sequence_directory
+def simulate_from_genomes(distribution: List[float], total_reads: int,
                           length: int,
+                          file_list: List[str] = None,
                           channel: Optional[str] = 'representative',
                           sequence_directory: Optional[str] = None,
                           random_seed: Optional[int] = None,
                           distribution_noise: Optional[str] = True):
-
+    # TODO remove?
     if channel == 'representative':
         lineage_info = pd.read_csv(representative_genomes_lineage(),
                                    sep='\t', index_col=0)
+    # TODO remove?
     elif channel == 'complete':
         lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
                                    index_col=0)
@@ -31,7 +32,7 @@ def simulate_from_genomes(id_list: List[str],
         np.random.seed(random_seed)
     random_func = np.random.randint
 
-    if len(id_list) != len(distribution):
+    if len(file_list) != len(distribution):
         raise ValueError("id_list and distribution must have the same shape")
 
     if sequence_directory is None:
@@ -43,13 +44,16 @@ def simulate_from_genomes(id_list: List[str],
     else:
         id_depths = [round(val * total_reads) for val in distribution]
 
+    # gets ids from what is in sequence directory (assumes no other files in
+    # directory as is)
+    if file_list is None:
+        file_list = os.listdir(sequence_directory)
+
     # then simulate reads from each
     all_reads = []
-    for idx, (id_, depth) in enumerate(zip(id_list, id_depths)):
+    for idx, (file_, depth) in enumerate(zip(file_list, id_depths)):
         if depth > 0:
-            sequence_file = full_fna_path(sequence_directory, id_,
-                                          lineage_info)
-            sequences = list(skbio.io.read(sequence_file, format='fasta'))
+            sequences = list(skbio.io.read(file_, format='fasta'))
             reads = sample_from_contig_set(sequences, depth, length,
                                            random_func)
             all_reads.append(reads)
@@ -57,7 +61,7 @@ def simulate_from_genomes(id_list: List[str],
     reads = np.vstack(all_reads)
 
     # TODO comment this with helpful comment
-    ids = [id_ for id_, depth in zip(id_list, id_depths) for _ in
+    ids = [id_ for id_, depth in zip(file_list, id_depths) for _ in
            range(depth)]
 
     return reads, ids

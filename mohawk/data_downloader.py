@@ -5,7 +5,7 @@ import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
 from mohawk.utils import _ftp_path, get_zipped_fasta_name, gz_stripper, \
-    representative_genomes_file, complete_genomes_file
+    representative_genomes_file, complete_genomes_file, full_fna_path
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
@@ -41,6 +41,7 @@ def _gunzip(gz_file: str, gunzipped_file: str) -> bool:
     return True
 
 
+# TODO flat directory structure
 def _file_gunzipper(id_list: List[str],
                     genomes_metadata: pd.DataFrame,
                     genomes_directory: str) -> None:
@@ -132,6 +133,7 @@ def _get_ids_not_downloaded(id_list: List[str],
 
     ids_to_download = []
     for id_ in id_list:
+        # TODO make expected local_dir just genomes_directory...
         expected_local_dir = os.path.join(genomes_directory,
                                           id_)
         fasta_gz_name = get_zipped_fasta_name(id_, genomes_metadata)
@@ -195,20 +197,24 @@ def _ensure_all_data(id_list: List[str],
 
     """
 
+    # TODO flat directory structure
     ids_to_download = _get_ids_not_downloaded(id_list,
                                               genomes_metadata,
                                               output_directory)
 
     # download .fna.gz files we do not have (do not need to download if
     # .fna exists)
+    # TODO flat directory structure
     _ncbi_ftp_downloader(ids_to_download, genomes_metadata, output_directory)
 
     # if .fna.gz files are not unzipped, unzip them
     ids_to_gunzip = _get_ids_not_downloaded(id_list, genomes_metadata,
                                             output_directory, to_unzip=True)
 
+    # TODO flat directory
     _file_gunzipper(ids_to_gunzip, genomes_metadata, output_directory)
 
+                                      # TODO flat directory structure
     id_file_list = [(id_, gz_stripper(get_zipped_fasta_name(id_,
                                                             genomes_metadata)))
                     for id_ in id_list]

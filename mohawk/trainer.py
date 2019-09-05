@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from mohawk.data_downloader import data_downloader
@@ -8,12 +9,9 @@ from mohawk.models import BaseModel
 from torch.utils.data import DataLoader
 
 
-def trainer(model: BaseModel,
-            id_list: List[str],
-            distribution: List[float],
-            total_reads: int,
-            length: int,
-            train_ratio: float,
+def trainer(model: BaseModel, distribution: List[float], total_reads: int,
+            length: int, train_ratio: float,
+            id_list: Optional[List[str]],
             level: Optional[str] = 'genus',
             channel: Optional[str] = 'representative',
             batch_size: Optional[int] = 1,
@@ -35,12 +33,21 @@ def trainer(model: BaseModel,
     if summary_kwargs is None:
         summary_kwargs = dict()
 
-    data_downloader(id_list,
-                    output_directory=data_directory,
-                    channel=channel)
+    # If id_list is not None, use the specified id's
+    if id_list is not None:
+        file_list = data_downloader(id_list,
+                                    output_directory=data_directory,
+                                    channel=channel)
+    # if id_list _is_ None, just use whatever is in the directory (handled
+    # by simulate_from_genomes)
+    # TODO may need some error catching for if data_directory is empty
+    else:
+        file_list = [os.path.join(data_directory, file_) for file_ in
+                     os.listdir(data_directory)]
 
-    reads, ids = simulate_from_genomes(id_list, distribution, total_reads,
-                                       length, channel, data_directory,
+                 # TODO flat directory structure for data_directory
+    reads, ids = simulate_from_genomes(distribution, total_reads, length,
+                                       file_list, channel, data_directory,
                                        random_seed,
                                        distribution_noise=distribution_noise)
 
@@ -56,15 +63,9 @@ def trainer(model: BaseModel,
                         output_directory=data_directory,
                         channel=channel)
         external_reads, external_ids = simulate_from_genomes(
-            external_validation_ids,
-            external_validation_distribution,
-            n_external_validation_reads,
-            length,
-            channel,  # presumably should be available in the same channel
-            data_directory,
-            random_seed + 5,  # TODO I think this will error if given None
-            distribution_noise=distribution_noise
-            )
+            external_validation_distribution, n_external_validation_reads,
+            length, external_validation_ids, channel, data_directory,
+            random_seed + 5, distribution_noise=distribution_noise)
 
         external_validation = True
         external_classes = id_to_lineage(external_ids, level, channel)

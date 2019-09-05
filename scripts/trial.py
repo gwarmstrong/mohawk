@@ -96,13 +96,9 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 # print(reads[:5], classes[:5])
 # print(reads[-5:], classes[-5:])
 
-model = trainer(ConvNetAvg, trial_ids, distribution, total_reads, length,
-                train_ratio, data_directory=trial_directory, random_seed=seed,
-                level=level,
-                batch_size=batch_size,
-                weight=weight,
-                distribution_noise=distribution_noise,
-                **external_validation_params,
-                train_kwargs=train_kwargs,
-                summary_kwargs=summary_kwargs)
+model = trainer(ConvNetAvg, distribution, total_reads, length, train_ratio,
+                trial_ids, level=level, batch_size=batch_size,
+                data_directory=trial_directory, random_seed=seed,
+                weight=weight, distribution_noise=distribution_noise,
+                train_kwargs=train_kwargs, summary_kwargs=summary_kwargs)
 print(model)
