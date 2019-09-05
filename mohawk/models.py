@@ -178,7 +178,7 @@ class BaseModel(nn.Module):
         im = ax.imshow(cm, cmap='Oranges')
 
         classes = self.class_encoder.inverse_transform(self.classes)
-        classes = ['\n'.join(wrap(l, 40)) for l in classes]
+        classes = ['\n'.join(wrap(str(l), 40)) for l in classes]
 
         tick_marks = np.arange(len(classes))
 

@@ -1,5 +1,6 @@
 # from mohawk.data_downloader import data_downloader
 # from mohawk.simulation import simulate_from_genomes, id_to_lineage
+import os
 import torch
 import pandas as pd
 from mohawk.trainer import trainer
@@ -15,51 +16,28 @@ from mohawk.simulation import id_to_lineage
 #              'GCF_001558415.2',  # Vibrio fluvialis
 #              ]
 # all ids not in validation
-trial_ids = ['GCF_000006745.1', 'GCF_000006765.1', 'GCF_000007565.2',
-             'GCF_000007645.1', 'GCF_000007805.1', 'GCF_000008485.1',
-             'GCF_000008525.1', 'GCF_000009865.1', 'GCF_000010125.1',
-             'GCF_000011545.1', 'GCF_000011705.1', 'GCF_000012245.1',
-             'GCF_000016565.1', 'GCF_000017705.1', 'GCF_000025085.1',
-             'GCF_000091465.1', 'GCF_000091785.1', 'GCF_000091985.1',
-             'GCF_000185885.1', 'GCF_000196095.1', 'GCF_000200595.1',
-             'GCF_000213805.1', 'GCF_000217675.1', 'GCF_000219605.1',
-             'GCF_000259255.1', 'GCF_000259275.1', 'GCF_000332735.1',
-             'GCF_000349975.1', 'GCF_000354175.2', 'GCF_000397205.1',
-             'GCF_000412695.1', 'GCF_000590475.1', 'GCF_000706685.1',
-             'GCF_000761155.1', 'GCF_000763535.1', 'GCF_000772105.1',
-             'GCF_000801275.2', 'GCF_000816085.1', 'GCF_000818015.1',
-             'GCF_000953135.1', 'GCF_000953655.1', 'GCF_000959245.1',
-             'GCF_001028645.1', 'GCF_001411495.1', 'GCF_001432245.1',
-             'GCF_001460635.1', 'GCF_001534745.1', 'GCF_001558415.2',
-             'GCF_001559115.2', 'GCF_001597285.1', 'GCF_001602095.1',
-             'GCF_001618885.1', 'GCF_001654435.1', 'GCF_001677275.1',
-             'GCF_001685465.1', 'GCF_001902315.1', 'GCF_001913135.1',
-             'GCF_001999985.1', 'GCF_002101335.1', 'GCF_002196515.1',
-             'GCF_002208805.2', 'GCF_002209165.2', 'GCF_002215135.1',
-             'GCF_002240035.1']
-validation_ids = [
-                  'GCF_000959725.1',  # Burkholderia gladioli
-                  'GCF_000007905.1',  # Helicobacter hepaticus
-                  'GCF_000512355.1',  # Legionella oakridgensis
-                  'GCF_000237065.1',  # Pseudomonas fluorescens
-                  'GCF_000013425.1',  # Staphylococcus aureus
-                  'GCF_001547935.1',  # Vibrio tritonius
-                  ]
-
+trial_ids = None
+validation_ids = None 
 # try another thing... train on all references for these clades that are not
 # in validation id's (make sure to exclude strain)
 
 level = 'genus'
 
-trial_classes = id_to_lineage(trial_ids, level)
+trial_directory = '/panfs/panfs1.ucsd.edu/panscratch/garmstro/mohawk/genome_annotation/ref107/raw_01'
+taxonomy_file = '/panfs/panfs1.ucsd.edu/panscratch/garmstro/mohawk/genome_annotation/rank_tids.tsv'
+
+trial_ids = [id_[:-4] for id_ in os.listdir(trial_directory)]
+trial_classes = id_to_lineage(trial_ids, level, channel=taxonomy_file)
 class_counts = pd.Series(trial_classes).value_counts().to_dict()
 distribution_numerator = [1 / class_counts[class_] for class_ in trial_classes]
 distribution_denominator = sum(distribution_numerator)
 distribution = [numerator / distribution_denominator for numerator in
                 distribution_numerator]
 
-trial_directory = '../data/trial_download'
-n_samples = len(trial_ids)
+trial_directory = '/panfs/panfs1.ucsd.edu/panscratch/garmstro/mohawk/genome_annotation/ref107/raw_01'
+taxonomy_file = '/panfs/panfs1.ucsd.edu/panscratch/garmstro/mohawk/genome_annotation/rank_tids.tsv'
+
+# n_samples = len(trial_ids)
 # distribution = [1/n_samples] * n_samples
 total_reads = 200# 00 * 15  # * 10
 length = 150
@@ -97,8 +75,9 @@ print("CUDA available: {}".format(train_kwargs['gpu']))
 # print(reads[-5:], classes[-5:])
 
 model = trainer(ConvNetAvg, distribution, total_reads, length, train_ratio,
-                trial_ids, level=level, batch_size=batch_size,
+                id_list=None, level=level, batch_size=batch_size,
                 data_directory=trial_directory, random_seed=seed,
                 weight=weight, distribution_noise=distribution_noise,
-                train_kwargs=train_kwargs, summary_kwargs=summary_kwargs)
+                train_kwargs=train_kwargs, summary_kwargs=summary_kwargs, taxonomy_mapping=taxonomy_file,
+                channel=taxonomy_file)
 print(model)
