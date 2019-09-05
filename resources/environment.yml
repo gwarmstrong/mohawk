@@ -4,6 +4,7 @@ channels:
   - etetoolkit
   - defaults
   - bioconda
+  - caffe2
 dependencies:
   - click=7.0
   - ete3=3.1.1
@@ -12,10 +13,11 @@ dependencies:
   - numpy>=1.12.0
   - pandas=0.24.2
   - pip=19.1.1
-  - python<=3.6.8
-  - pytorch=1.1.0
+  - python<=3.6.9
+  - pytorch=1.2
   - scikit-bio=0.5.2
   - scikit-learn=0.21.2
   - torchvision=0.3.0
+  - caffe2
   - pip:
-    - tb-nightly==1.15.0a20190624
+    - tb-nightly
