@@ -66,7 +66,7 @@ train_kwargs = {'gpu': torch.cuda.is_available(),
                 'epochs': 500,
                 'summarize': True,
                 'learning_rate': 0.0001,
-                'log_dir': 'runs',
+                'log_dir': 'kraken_train_low/runs',
                 'save_interval': 10
                 }
 
