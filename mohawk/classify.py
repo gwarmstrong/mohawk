@@ -11,21 +11,13 @@ from mohawk._format import encode_sequence
 from mohawk.trainer import prepare_dataloader
 
 
-def classify(model: Union[BaseModel, str],  # assumes a trained model,
-             # can pass path
-             length: int,
-             data_path: str,  # path to a FASTA file
-             pad_value: Optional[int] = 0,
-             batch_size: Optional[int] = 1,
+def classify(model: Union[BaseModel, str], length: int, data_path: str,
+             pad_value: Optional[int] = 0, batch_size: Optional[int] = 1,
              format_kwargs: Optional[dict] = None,
-             format_: Optional[str] = 'fasta',  # input to skbio.io.read
-             output_directory: Optional[str] = None):
+             format_: Optional[str] = 'fasta'):
 
     # TODO may need some map from output to label -> could keep a dictionary
     #  in the model attributes ?
-    if output_directory is None:
-        output_directory = os.path.curdir
-
     if format_kwargs is None:
         format_kwargs = dict()
 
@@ -85,8 +77,7 @@ def classify(model: Union[BaseModel, str],  # assumes a trained model,
     results = pd.DataFrame({'ids': all_ids,
                             'predictions': transformed_predictions})
 
-    output_name = os.path.join(output_directory, 'prediction_results.txt')
-    results.to_csv(output_name, sep='\t', index=False)
+    return results
 
 
 # TODO maybe rename `encoded`
@@ -95,17 +86,22 @@ def ensure_lengths(encoded, length, pad_value=0):
     all_ids = []
     for sequence, id_ in encoded:
         if len(sequence) < length:
+            raise ValueError('All reads should have length {}.'.format(length))
             # if sequence is not long enough, add padding
-            this_sequence = sequence.copy()
-            pad_length = length - len(sequence)
-            this_sequence = np.append(this_sequence, [pad_value] * pad_length)
-            all_sequences.append(this_sequence)
-            all_ids.append(id_ + '__idx_0')
+            # this_sequence = sequence.copy()
+            # pad_length = length - len(sequence)
+            # this_sequence = np.append(this_sequence, [pad_value] * pad_length)
+            # all_sequences.append(this_sequence)
+            # all_ids.append(id_ + '__idx_0')
+        elif len(sequence) > length:
+            raise ValueError('All reads should have length {}.'.format(length))
+            # for start_index in range(len(sequence) - length + 1):
+            #     this_sequence = sequence[start_index: start_index + length]
+            #     all_sequences.append(this_sequence)
+            #     all_ids.append(id_ + '__idx_{}'.format(start_index))
         else:
-            for start_index in range(len(sequence) - length + 1):
-                this_sequence = sequence[start_index: start_index + length]
-                all_sequences.append(this_sequence)
-                all_ids.append(id_ + '__idx_{}'.format(start_index))
+            all_sequences.append(sequence)
+            all_ids.append(id_)
 
     all_sequences = np.vstack(all_sequences)
     return all_sequences, all_ids
