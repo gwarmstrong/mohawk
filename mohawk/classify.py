@@ -1,5 +1,3 @@
-import os
-
 import torch
 
 from mohawk.models import BaseModel
