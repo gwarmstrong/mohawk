@@ -19,12 +19,14 @@ def mohawk():
               help='The length of sequences to produce')
 @click.option('--output-file', type=click.File('wb'),
               help='The file to save the output', required=True)
-def classify(model, sequence_file, length, output_file):
+@click.option('--batch-size', type=int, default=64, required=False,
+              'Batch size to use for classification')
+def classify(model, sequence_file, length, output_file, batch_size):
     # TODO more options for fastq i/o
     format = 'fastq'
     format_kwargs = {'phred_offset': 33}
-    results = classify_dl(model, length, sequence_file.name,
-                          batch_size=64,
+    results = classify_dl(model, length, sequence_file,
+                          batch_size=batch_size,
                           format_=format,
                           format_kwargs=format_kwargs)
 
