@@ -2,7 +2,7 @@
 
 import os
 import click
-from mohawk.classify import classify
+from mohawk.classify import classify as classify_dl
 
 
 @click.group()
@@ -13,22 +13,22 @@ def mohawk():
 @mohawk.command()
 @click.option('--model', type=click.Path(exists=True),
               help='A path to a trained model', required=True)
-@click.option('--sequence-file', type=click.File(),
+@click.option('--sequence-file', type=click.File('rb'),
               help='A sequence files', required=True)
 @click.option('--length', type=int, default=150, required=False,
               help='The length of sequences to produce')
-@click.option('--output-file', type=str,
+@click.option('--output-file', type=click.File('wb'),
               help='The file to save the output', required=True)
 def classify(model, sequence_file, length, output_file):
     # TODO more options for fastq i/o
     format = 'fastq'
     format_kwargs = {'phred_offset': 33}
-    results = classify(model, length, sequence_file,
-                       batch_size=64,
-                       format_=format,
-                       format_kwargs=format_kwargs)
+    results = classify_dl(model, length, sequence_file.name,
+                          batch_size=64,
+                          format_=format,
+                          format_kwargs=format_kwargs)
 
-    results.to_csv(output_file, sep='\t', index=False)
+    results.to_csv(output_file.name, sep='\t', index=False)
 
 # TODO a function for training...
 

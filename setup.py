@@ -10,4 +10,5 @@ setup(
     url="https://github.com/gwarmstrong/mohawk",
     description="Taxonomic Classification and Metagenomic Experiment "
                 "simulator",
+    scripts=['scripts/mohawk']
 )
