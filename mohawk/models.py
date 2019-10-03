@@ -755,3 +755,57 @@ class ConvNetAvg5(BaseModel):
         x = x.max(-1).values
         x = self.fc(x)
         return x
+
+
+class ConvNetAvg6(BaseModel):
+    def __init__(self,
+                 n_classes: int,
+                 seed: Optional[int] = None,
+                 ):
+        super(ConvNetAvg6, self).__init__(seed=seed)
+
+        self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.optim = Adam
+        self.n_classes = n_classes
+
+        dilations = [1, 1, 1]  # end up looking at 64-mers
+        # how many distinguishing patterns of length would we expect?
+        channels = [4, 16, 100, 500]  # first has to be 4 # basically says
+        # there might be some combination of 500 distingushing patterns
+        linear_sizes = [channels[-1], 500, 500, 500, 300, 100, 50, n_classes]
+        self.conv = nn.Sequential()
+        for i, d in enumerate(dilations):
+            # TODO downsample after convs ?
+            self.conv.add_module('Conv_' + str(i),
+                                 nn.Conv1d(in_channels=channels[i],
+                                           out_channels=channels[i + 1],
+                                           kernel_size=4,
+                                           stride=1,
+                                           dilation=d
+                                           )
+                                 )
+            self.conv.add_module('Conv_' + str(i) + '_relu', nn.ReLU())
+
+            this_max_pool = nn.MaxPool1d(4, stride=4)
+            self.conv.add_module('Conv_' + str(i) + '_pool', this_max_pool)
+
+        self.fc = nn.Sequential()
+        for i in range(1, len(linear_sizes)):
+            self.fc.add_module('FC_' + str(i),
+                               nn.Linear(linear_sizes[i - 1],
+                                         linear_sizes[i]),
+                               )
+            if i < len(linear_sizes) - 1:
+                self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
+            else:
+                self.fc.add_module('Softmax', nn.Softmax(dim=1))
+
+    def reinitialize(self):
+        return self.__class__(n_classes=self.n_classes, seed=self.seed)
+
+    def forward(self, data):
+        x = self.conv(data)
+        # TODO pool across channel opposed to across sequence
+        x = x.max(-1).values
+        x = self.fc(x)
+        return x
