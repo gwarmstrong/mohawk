@@ -46,6 +46,7 @@ def classify(model: Union[BaseModel, str], length: int, data_path: str,
     print("Data size: {}".format(encoded_sequences.shape))
     print("Prepare dataloader...")
     # TODO turn `encoded` into a dataset/dataloader
+    # TODO turn prepare_dataloader into a model method
     dataloader = prepare_dataloader(encoded_sequences,
                                     ids=ids,
                                     batch_size=batch_size)
@@ -74,6 +75,9 @@ def classify(model: Union[BaseModel, str], length: int, data_path: str,
 
     results = pd.DataFrame({'ids': all_ids,
                             'predictions': transformed_predictions})
+
+    # TODO maybe results should be agglomerated into a profile in this
+    #  function ?
 
     return results
 

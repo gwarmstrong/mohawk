@@ -54,6 +54,8 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
     # TODO ids returning in simulate_from_genomes should be better
     # formally "simualte_from_genomes" makes brittle assumptions about file
     # naming conventions
+    # TODO there should be multiple types of simulation functions depending
+    #  on model type (namely, classify by read, and classify by dataset)
     reads, ids = simulate_from_genomes(distribution, total_reads, length,
                                        file_list, channel, data_directory,
                                        random_seed,
