@@ -16,8 +16,8 @@ install:
 
 script:
   - source activate test-env
-  # run unit tests
-  - nosetests -v mohawk --with-coverage --cover-package=mohawk
+  # run unit tests (try multiple times in case of url timeout error)
+  - travis_retry nosetests -v mohawk --with-coverage --cover-package=mohawk
   # lint
   - flake8 mohawk/ setup.py
 
