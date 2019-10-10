@@ -1,4 +1,3 @@
-import unittest
 from mohawk.classify import ensure_lengths, classify
 from mohawk.tests import testing
 

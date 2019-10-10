@@ -11,7 +11,7 @@ all_resources = ['assembly_summary_refseq.txt',
                  'refseq_complete_genomes_lineage.txt',
                  'refseq_representative_genomes_ftp.txt',
                  'refseq_representative_genomes_lineage.txt'
-                ]
+                 ]
 
 
 if not all(resource_exists('mohawk.resources', res) for res in all_resources):

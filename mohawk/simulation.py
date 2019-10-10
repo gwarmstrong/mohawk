@@ -4,32 +4,18 @@ import pandas as pd
 import skbio
 from typing import List, Optional
 
-from mohawk.utils import full_fna_path, _get_taxonomy, \
-    representative_genomes_lineage, complete_genomes_lineage
+from mohawk.utils import _get_taxonomy, representative_genomes_lineage, \
+    complete_genomes_lineage
 from mohawk._format import sample_from_contig_set
 
 
 # TODO flat directory structure for sequence_directory
 def simulate_from_genomes(distribution: List[float], total_reads: int,
-                          length: int,
-                          file_list: List[str] = None,
-                          channel: Optional[str] = 'representative',
+                          length: int, file_list: List[str] = None,
                           sequence_directory: Optional[str] = None,
                           random_seed: Optional[int] = None,
                           distribution_noise: Optional[str] = True):
-    # TODO remove?
-    if channel == 'representative':
-        lineage_info = pd.read_csv(representative_genomes_lineage(),
-                                   sep='\t', index_col=0)
-    # TODO remove?
-    elif channel == 'complete':
-        lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
-                                   index_col=0)
-    elif os.path.isfile(channel):
-        lineage_info = pd.read_csv(channel, sep='\t', index_col=0)
-    else:
-        raise ValueError("Invalid choice for `channel`. Options are "
-                         "'representative', 'complete', or a filepath.")
+
     if random_seed is not None:
         np.random.seed(random_seed)
     random_func = np.random.randint
@@ -107,5 +93,3 @@ def id_to_lineage(ids: List[str],
                          "'representative' and 'complete'.")
 
     return [_get_taxonomy(id_, lineage_info, level) for id_ in ids]
-
-

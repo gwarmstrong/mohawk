@@ -119,3 +119,6 @@ notes/
 data/
 mohawk/resources/*.txt
 runs/
+
+# .DS_Store
+.DS_Store

@@ -54,6 +54,7 @@ def classify(model: Union[BaseModel, str], length: int, data_path: str,
 
     print("Predicting...")
     # TODO predict on `encoded` dataset
+    # TODO turn prediction into a class method for the model ?
     all_ids = []
     all_class_predictions = []
     for index_epoch, data in enumerate(dataloader):
@@ -87,20 +88,8 @@ def ensure_lengths(encoded, length, pad_value=0):
     all_sequences = []
     all_ids = []
     for sequence, id_ in encoded:
-        if len(sequence) < length:
+        if len(sequence) != length:
             raise ValueError('All reads should have length {}.'.format(length))
-            # if sequence is not long enough, add padding
-            # this_sequence = sequence.copy()
-            # pad_length = length - len(sequence)
-            # this_sequence = np.append(this_sequence, [pad_value] * pad_length)
-            # all_sequences.append(this_sequence)
-            # all_ids.append(id_ + '__idx_0')
-        elif len(sequence) > length:
-            raise ValueError('All reads should have length {}.'.format(length))
-            # for start_index in range(len(sequence) - length + 1):
-            #     this_sequence = sequence[start_index: start_index + length]
-            #     all_sequences.append(this_sequence)
-            #     all_ids.append(id_ + '__idx_{}'.format(start_index))
         else:
             all_sequences.append(sequence)
             all_ids.append(id_)

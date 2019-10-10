@@ -16,7 +16,8 @@ install:
 
 script:
   - source activate test-env
-  - nosetests -v mohakw --with-coverage --cover-package=benchutils
+  # run unit tests
+  - nosetests -v mohawk --with-coverage --cover-package=benchutils
   # lint
   - flake8 mohawk/ setup.py
 

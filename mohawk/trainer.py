@@ -57,8 +57,7 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
     # TODO there should be multiple types of simulation functions depending
     #  on model type (namely, classify by read, and classify by dataset)
     reads, ids = simulate_from_genomes(distribution, total_reads, length,
-                                       file_list, channel, data_directory,
-                                       random_seed,
+                                       file_list, data_directory, random_seed,
                                        distribution_noise=distribution_noise)
 
     # remap ids based on naming convention.... if we downloaded, we know the
@@ -86,8 +85,8 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
                         channel=channel)
         external_reads, external_ids = simulate_from_genomes(
             external_validation_distribution, n_external_validation_reads,
-            length, external_validation_ids, channel, data_directory,
-            random_seed + 5, distribution_noise=distribution_noise)
+            length, external_validation_ids, data_directory, random_seed + 5,
+            distribution_noise=distribution_noise)
 
         external_validation = True
         external_classes = id_to_lineage(external_ids, level, channel)
@@ -122,11 +121,6 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
                                                  batch_size=batch_size)
     else:
         external_dataloader = None
-
-    if weight:
-        weights = prepare_weights(train_dataloader)
-    else:
-        weights = None
 
     training_model = model(n_classes=len(set(classes)),
                            seed=random_seed,

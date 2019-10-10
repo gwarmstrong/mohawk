@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
-from typing import Optional, List
+from typing import Optional
 from sklearn.metrics import f1_score, confusion_matrix
 import numpy as np
 import matplotlib.figure
@@ -175,7 +175,7 @@ class BaseModel(nn.Module):
                                        edgecolor='k')
 
         ax = fig.add_subplot(1, 1, 1)
-        im = ax.imshow(cm, cmap='Oranges')
+        ax.imshow(cm, cmap='Oranges')
 
         classes = self.class_encoder.inverse_transform(self.classes)
         classes = ['\n'.join(wrap(str(l), 40)) for l in classes]
@@ -348,7 +348,7 @@ class BaseModel(nn.Module):
                 writer.add_figure('{}/{}'.format(metric, dataset),
                                   reshaped_stats[metric][dataset],
                                   counter)
-            
+
             for name, acc in reshaped_stats['accuracy-global'].items():
                 print("IT: {}, {} ACC: {}".format(counter,
                                                   name,
@@ -499,9 +499,9 @@ class ConvNet2(BaseModel):
         self.fc = nn.Sequential()
         for i in range(1, len(linear_sizes)):
             self.fc.add_module('FC_' + str(i),
-                                 nn.Linear(linear_sizes[i - 1],
-                                           linear_sizes[i]),
-                                 )
+                               nn.Linear(linear_sizes[i - 1],
+                                         linear_sizes[i]),
+                               )
             if i < len(linear_sizes) - 1:
                 self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
             else:
