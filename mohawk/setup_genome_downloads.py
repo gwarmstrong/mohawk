@@ -1,4 +1,6 @@
 import os
+import time
+from urllib import error as urlerror
 from urllib import request
 import pandas as pd
 from ete3 import NCBITaxa
@@ -28,7 +30,7 @@ def get_lineage_array(ncbi, taxid):
             in rank_ids]
 
 
-def setup_genome_downloads(base_dir=None):
+def setup_genome_downloads(base_dir=None, urlretrieve_tries=10):
     if base_dir is None:
         base_dir = os.path.curdir()
     resources_dir = os.path.join(base_dir, 'resources')
@@ -36,7 +38,23 @@ def setup_genome_downloads(base_dir=None):
     def resource(file_name_): return os.path.join(resources_dir, file_name_)
 
     file_name = os.path.join(resources_dir, 'assembly_summary_refseq.txt')
-    request.urlretrieve(url, file_name)
+    count = 0
+    result = False
+    while (count < urlretrieve_tries) and (not result):
+        try:
+            request.urlretrieve(url, file_name)
+        except urlerror.URLError:
+            print("The command `request.urlretrieve(url, file_name)` failed."
+                  "Retrying, {} of {}".format(count, urlretrieve_tries))
+            time.sleep(10)
+        else:
+            result = True
+
+    if not result:
+        raise urlerror.URLError("The command `request.urlretrieve(url, "
+                                "file_name)` failed {} times.".format(
+                                    urlretrieve_tries)
+                                )
 
     ncbi = NCBITaxa()  # make take a few minutes if first time
     assembly_info = pd.read_csv(os.path.join(resources_dir,
