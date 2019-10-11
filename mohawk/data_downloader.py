@@ -5,7 +5,7 @@ import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
 from mohawk.utils import _ftp_path, get_zipped_fasta_name, gz_stripper, \
-    representative_genomes_file, complete_genomes_file, full_fna_path
+    representative_genomes_file, complete_genomes_file
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
@@ -214,7 +214,7 @@ def _ensure_all_data(id_list: List[str],
     # TODO flat directory
     _file_gunzipper(ids_to_gunzip, genomes_metadata, output_directory)
 
-                                      # TODO flat directory structure
+    # TODO flat directory structure for `get_zipped_fasta_name`
     id_file_list = [(id_, gz_stripper(get_zipped_fasta_name(id_,
                                                             genomes_metadata)))
                     for id_ in id_list]

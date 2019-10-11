@@ -38,7 +38,7 @@ def setup_genome_downloads(base_dir=None):
     file_name = os.path.join(resources_dir, 'assembly_summary_refseq.txt')
     request.urlretrieve(url, file_name)
 
-    ncbi = NCBITaxa() # make take a few minutes if first time
+    ncbi = NCBITaxa()  # make take a few minutes if first time
     assembly_info = pd.read_csv(os.path.join(resources_dir,
                                              'assembly_summary_refseq.txt'),
                                 sep='\t',
@@ -52,8 +52,8 @@ def setup_genome_downloads(base_dir=None):
     bacteria_assembly_info = assembly_info.loc[is_bacteria]
 
     # only keep complete genomes
-    complete_genomes = bacteria_assembly_info['assembly_level'] == 'Complete ' \
-                                                                    'Genome'
+    complete_genomes = bacteria_assembly_info['assembly_level'] == 'Complete '\
+                                                                   'Genome'
     complete_genomes_info = bacteria_assembly_info.loc[complete_genomes]
 
     # drop genomes excluded from refseq
@@ -110,8 +110,9 @@ def setup_genome_downloads(base_dir=None):
             sep='\t', na_rep='na')
 
     representatives_ftp = representatives_info[ftp_cols]
-    representatives_ftp.to_csv(resource('refseq_representative_genomes_ftp.txt'),
-                               sep='\t', na_rep='na')
+    representatives_ftp.to_csv(
+        resource('refseq_representative_genomes_ftp.txt'), sep='\t',
+        na_rep='na')
 
 
 if __name__ == "__main__":
