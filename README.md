@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gwarmstrong/master.svg?branch=master)](https://travis-ci.org/gwarmstrong/master)
+[![Build Status](https://travis-ci.org/gwarmstrong/mohawk.svg?branch=master)](https://travis-ci.org/gwarmstrong/mohawk)
 [![Coverage Status](https://coveralls.io/repos/github/gwarmstrong/mohawk/badge.svg?branch=master)](https://coveralls.io/github/gwarmstrong/mohawk?branch=master)
 
 *This code is still under active initial development, so major backwards-incompatible changes might occur*
