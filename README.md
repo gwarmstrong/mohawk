@@ -16,7 +16,6 @@ cd mohawk
 conda env create -n mohawk -f resources/environment.yml
 conda activate mohawk
 pip install -e .
-
 ```
 
 ## Usage
@@ -30,7 +29,7 @@ scripts in the `scripts/` directory.
 An example of using the interface for using a pre-trained mohawk model 
 to classify reads from a `fastq` file is included below:
 
-```python
+```bash
 mohawk classify --model /path/to/model \
     --sequence-file /path/to/input/fastq \
     --output-file /path/to/ouput/file \
