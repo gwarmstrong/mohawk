@@ -47,6 +47,7 @@ def setup_genome_downloads(base_dir=None, urlretrieve_tries=10):
             print("The command `request.urlretrieve(url, file_name)` failed."
                   "Retrying, {} of {}".format(count, urlretrieve_tries))
             time.sleep(10)
+            count += 1
         else:
             result = True
 
