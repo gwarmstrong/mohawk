@@ -1,6 +1,7 @@
 import unittest
 import pkg_resources
 import os
+import shutil
 
 
 class MohawkTestCase(unittest.TestCase):
@@ -19,5 +20,8 @@ class MohawkTestCase(unittest.TestCase):
         return path
 
     def tearDown(self) -> None:
-        for file_ in self.to_remove:
-            os.remove(file_)
+        for path in self.to_remove:
+            if os.path.isfile(path):
+                os.remove(path)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)

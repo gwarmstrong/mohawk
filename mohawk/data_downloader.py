@@ -263,7 +263,7 @@ def data_downloader(genome_ids: List[str],
                          "'representative' and 'complete'.")
 
     if output_directory is None:
-        output_directory = os.path.curdir()
+        output_directory = os.path.curdir
 
     possible_ids = set(genomes_metadata.index)
     for id_ in genome_ids:
