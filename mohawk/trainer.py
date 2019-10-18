@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 
 # TODO current file_list, taxonomy setup needs to be re-worked...
 def trainer(model: BaseModel, distribution: List[float], total_reads: int,
-            length: int, train_ratio: float,
-            id_list: Optional[List[str]],
+            length: int, train_ratio: float, id_list: Optional[List[str]],
+            class_list: Optional[List] = None,
             level: Optional[str] = 'genus',
             channel: Optional[str] = 'representative',
             batch_size: Optional[int] = 1,
@@ -21,8 +21,6 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
-            weight: Optional[bool] = False,
-            distribution_noise: Optional[bool] = True,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None,
@@ -51,30 +49,17 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
         raise ValueError('A value must be supplied for taxonomy_mapping if '
                          'id_list is None')
 
-    # TODO ids returning in simulate_from_genomes should be better
-    # formally "simualte_from_genomes" makes brittle assumptions about file
-    # naming conventions
-    # TODO there should be multiple types of simulation functions depending
-    #  on model type (namely, classify by read, and classify by dataset)
     reads, ids = simulate_from_genomes(distribution, total_reads, length,
-                                       file_list, data_directory, random_seed,
-                                       distribution_noise=distribution_noise)
+                                       file_list, data_directory, random_seed)
 
-    # remap ids based on naming convention.... if we downloaded, we know the
-    # id is the second to last
+    id_depths = [round(val * total_reads) for val in distribution]
+    if class_list is None:
+        class_list = id_list
 
-    # TODO this may be brittle...
-    if id_list is not None:
-        # grab ids by stripping it from second to last part of filepath
-        ids = [id_.split(os.sep)[-2] for id_ in ids]
-        classes = id_to_lineage(ids, level, channel)
-    else:
-        # we know taxonomy_mapping is not None since we checked earlier
-        # grab ids by stripping it from part of filename before .fna
-        ids = [id_.split(os.sep)[-1][:-4] for id_ in ids]
-        classes = id_to_lineage(ids, level, taxonomy_mapping)
+    list_of_classes = [[class_] * depth for class_, depth in
+                       zip(class_list, id_depths)]
+    class_list = [item for sublist in list_of_classes for item in sublist]
 
-    # TODO maybe prep external validation function ?
     external_validation = False
     external_classes = None
     if external_validation_ids is not None and \
@@ -85,8 +70,7 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
                         channel=channel)
         external_reads, external_ids = simulate_from_genomes(
             external_validation_distribution, n_external_validation_reads,
-            length, external_validation_ids, data_directory, random_seed + 5,
-            distribution_noise=distribution_noise)
+            length, external_validation_ids, data_directory, random_seed + 5)
 
         external_validation = True
         external_classes = id_to_lineage(external_ids, level, channel)
@@ -98,19 +82,19 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
                          'specified, all must be specified.')
 
     # split into train and validation
-    num_samples = len(classes)
+    num_samples = len(class_list)
 
     train_indices, val_indices = train_val_split(num_samples, train_ratio,
                                                  random_seed=random_seed)
 
     # create Dataset and DataLoader for train and validation
     train_dataloader = prepare_dataloader(reads,
-                                          classes,
+                                          class_list,
                                           ids,
                                           batch_size=batch_size,
                                           indices=train_indices)
     val_dataloader = prepare_dataloader(reads,
-                                        classes,
+                                        class_list,
                                         ids,
                                         batch_size=batch_size,
                                         indices=val_indices)
@@ -122,7 +106,7 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
     else:
         external_dataloader = None
 
-    training_model = model(n_classes=len(set(classes)),
+    training_model = model(n_classes=len(set(class_list)),
                            seed=random_seed,
                            **model_kwargs)
 
