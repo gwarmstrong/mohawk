@@ -10,8 +10,10 @@ def mohawk():
     pass
 
 
+# TODO the sequence length should be determined by the model, and the error
+#  is that the sequence data given does not have the right length
 @mohawk.command()
-@click.option('--model', type=click.Path(exists=True),
+@click.option('--model-path', type=click.Path(exists=True),
               help='A path to a trained model', required=True)
 @click.option('--sequence-file', type=click.File('rb'),
               help='A sequence files', required=True)
@@ -19,18 +21,35 @@ def mohawk():
               help='The file to save the output', required=True)
 @click.option('--length', type=int, default=150, required=False,
               help='The length of sequences to produce')
-def classify(model, sequence_file, output_file, length):
+def classify(model_path, sequence_file, output_file, length):
     # TODO more options for fastq i/o
     format = 'fastq'
     format_kwargs = {'phred_offset': 33}
-    results = classify_dl(model, length, sequence_file,
+    results = classify_dl(model_path, length, sequence_file,
                           batch_size=640,
                           format_=format,
                           format_kwargs=format_kwargs)
 
     results.to_csv(output_file.name, sep='\t', index=False)
 
-# TODO a function for training...
+
+model_names_to_obj = dict()  # TODO give model name, map to object
+
+
+model_names_to_data_prep = dict()
+# TODO map each model_type to a way to prepare the data
+# TODO this also has implications for the way data is prepared for classifying
+@mohawk.command()
+@click.option('--model-name', type=click.Path(exists=True),
+              help='The name of', required=True)
+@click.option('--length', type=int, default=150, required=False,
+              help='The length of sequences to produce')
+def train(model_name, length):
+    pass
+
+# TODO needs seed, number of reads to simulate, train_ratio, batch_size,
+#  gpu, summary_interval, epochs, summarize, learning_rate, log_dir,
+#  concise=True, config file
 
 
 if __name__ == '__main__':
