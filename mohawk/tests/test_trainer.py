@@ -25,8 +25,8 @@ class TestTrainer(testing.MohawkTestCase):
                         'epochs': 10,
                         'summarize': True,
                         'learning_rate': 0.001,
-                        'log_dir': self.get_data_path('model_log_1')}
-        model = trainer(self.model, self.distribution, self.total_reads,
-                        self.length, self.train_ratio, self.id_list,
-                        data_directory=self.get_data_path('demo_data_dir_1'),
-                        train_kwargs=train_kwargs)
+                        'log_dir': self.create_data_path('model_log_1')}
+        trainer(self.model, self.distribution, self.total_reads,
+                self.length, self.train_ratio, self.id_list,
+                data_directory=self.get_data_path('sample_genomes'),
+                train_kwargs=train_kwargs)
