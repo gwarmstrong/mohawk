@@ -36,15 +36,52 @@ def classify(model_path, sequence_file, output_file, length):
 model_names_to_obj = dict()  # TODO give model name, map to object
 
 
-model_names_to_data_prep = dict()
-# TODO map each model_type to a way to prepare the data
-# TODO this also has implications for the way data is prepared for classifying
 @mohawk.command()
-@click.option('--model-name', type=click.Path(exists=True),
-              help='The name of', required=True)
+@click.option('--model-name', type=str,  # TODO check if it is in dict() ?
+              help='The name of the model type to train on', required=True)
+@click.option('--genome-ids', type=click.Path(exists=True),
+              help='The file that includes genome ids to train on and the '
+                   'number of reads to sample from each genome. Genomes '
+                   'will be considered the same class, unless classes are '
+                   'provided in an additional column',
+              required=True)
+@click.option('--external-validation-ids', default=None,
+              type=click.Path(exists=True),
+              help='A file containing genome ids that are used to evaluate '
+                   'the model, but are not used for training. Same format as '
+                   '`genome-ids`',
+              required=False)  # TODO do check for whether it contains ids
+# in `genome-ids`
+@click.option('--lr', type=float, default=0.0001, required=False,
+              help='Portion of simulation data to train on. (1-train_ratio) '
+                   'will be used for assessing performance on the ')
+@click.option('--epochs', type=int, default=100, required=False,
+              help='Number of epochs to train models on')
+@click.option('--summarize', type=bool, default=True, required=False,
+              help='Whether to write out summaries')
+@click.option('--log-dir', type=str, default='runs/', required=False,
+              help='Directory to save model logs too')
+@click.option('--summary-interval', type=int, default=5, required=False,
+              help='Interval between epochs to summarize model on')
+@click.option('--train-ratio', type=float, default=0.9, required=False,
+              help='Portion of simulation data to train on. (1-train_ratio) '
+                   'will be used for assessing performance on the ')
 @click.option('--length', type=int, default=150, required=False,
               help='The length of sequences to produce')
+@click.option('--seed', type=int, default=0, required=False,
+              help='The random seed to use in data sampling')
+@click.option('--concise-summary', type=bool, default=True, required=False,
+              help='If True, only writes some select summary statistics.')
+@click.option('--gpu', type=bool, default=False, required=False,
+              help='Uses gpu (if available) when True')
+@click.option('--batch-size', type=int, default=64, required=False,
+              help='Size of batches to use for training')
 def train(model_name, length):
+    # TODO distribution should be figured out from proportion of reads for
+    #  each genome and total reads figured out from sum of reads column in
+    #  `genome-ids` file
+    # TODO distribution noise False always for now, weight=False,
+    # TODO check for gpu torch.cuda.is_available()
     pass
 
 # TODO needs seed, number of reads to simulate, train_ratio, batch_size,
