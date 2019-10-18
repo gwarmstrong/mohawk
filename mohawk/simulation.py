@@ -11,10 +11,9 @@ from mohawk._format import sample_from_contig_set
 
 # TODO flat directory structure for sequence_directory
 def simulate_from_genomes(distribution: List[float], total_reads: int,
-                          length: int, file_list: List[str] = None,
+                          length: int, file_list: List[str],
                           sequence_directory: Optional[str] = None,
-                          random_seed: Optional[int] = None,
-                          distribution_noise: Optional[str] = True):
+                          random_seed: Optional[int] = None):
 
     if random_seed is not None:
         np.random.seed(random_seed)
@@ -27,15 +26,7 @@ def simulate_from_genomes(distribution: List[float], total_reads: int,
         sequence_directory = os.path.curdir()
 
     # use multinomial to get number of reads for each id
-    if distribution_noise:
-        id_depths = np.random.multinomial(total_reads, distribution)
-    else:
-        id_depths = [round(val * total_reads) for val in distribution]
-
-    # gets ids from what is in sequence directory (assumes no other files in
-    # directory as is)
-    if file_list is None:
-        file_list = os.listdir(sequence_directory)
+    id_depths = [round(val * total_reads) for val in distribution]
 
     # then simulate reads from each
     all_reads = []
