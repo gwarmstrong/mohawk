@@ -31,9 +31,8 @@ class TestTrainer(testing.MohawkTestCase):
                         'summarize': True,
                         'learning_rate': 0.001,
                         'log_dir': self.create_data_path('model_log_1')}
-        mod = trainer(ConvNetAvg, self.distribution, self.total_reads,
-                      self.length,
-                      self.train_ratio, self.id_list,
+        mod = trainer(ConvNetAvg, self.total_reads, self.length,
+                      self.train_ratio, self.id_list, self.distribution,
                       data_directory=self.get_data_path('sample_genomes'),
                       train_kwargs=train_kwargs)
 
@@ -46,9 +45,9 @@ class TestTrainer(testing.MohawkTestCase):
                         'summarize': True,
                         'learning_rate': 0.001,
                         'log_dir': self.create_data_path('model_log_2')}
-        mod = trainer(ConvNetAvg2, self.distribution, self.total_reads,
-                      self.length,
-                      self.train_ratio, self.id_list, class_list=self.classes,
+        mod = trainer(ConvNetAvg2, self.total_reads, self.length,
+                      self.train_ratio, self.id_list, self.distribution,
+                      class_list=self.classes,
                       data_directory=self.get_data_path('sample_genomes'),
                       train_kwargs=train_kwargs)
 

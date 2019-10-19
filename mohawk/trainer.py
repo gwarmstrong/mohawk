@@ -10,10 +10,9 @@ from torch.utils.data import DataLoader
 
 
 # TODO current file_list, taxonomy setup needs to be re-worked...
-def trainer(model: BaseModel, distribution: List[float], total_reads: int,
-            length: int, train_ratio: float, id_list: Optional[List[str]],
-            class_list: Optional[List] = None,
-            level: Optional[str] = 'genus',
+def trainer(model: BaseModel, total_reads: int, length: int,
+            train_ratio: float, id_list: Optional[List[str]],
+            distribution: List[float], class_list: Optional[List] = None,
             channel: Optional[str] = 'representative',
             batch_size: Optional[int] = 1,
             data_directory: Optional[str] = None,
@@ -24,7 +23,61 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None,
-            taxonomy_mapping: Optional[str] = None):
+            taxonomy_mapping: Optional[str] = None,
+            external_validation_classes: Optional[List] = None) -> BaseModel:
+    """
+
+    Parameters
+    ----------
+    external_validation_classes
+    model
+        An model class to use for training
+    total_reads
+        The total number of reads to simulate for training
+    length
+        The length of reads to simulate for training
+    train_ratio
+        The portion of simulated reads that should be used for training
+    id_list
+        The list of genome ids to use for training
+    distribution
+        The relative amount of each id in id_list to use
+    class_list
+        The class of each id in id_list
+    channel
+        Choice between 'representative' and 'complete', describing criteria
+        NCBI genomes must meet to download
+    batch_size
+        Size of batches for neural network training
+    data_directory
+        Directory that genome data is saved in, or should be saved in for
+        downloaded data
+    random_seed
+        Seed for the random number generator
+    external_validation_ids
+        Genome ids to use for validating that should be exclusive with
+        training id_list
+    n_external_validation_reads
+        how many reads to sample from the external validation ids
+    external_validation_distribution
+        How to distribute the reads amongst the external validation ID's
+    model_kwargs
+        kwargs to be passed to the `model`
+    train_kwargs
+        kwargs to be passed to the training function of the `model`
+    summary_kwargs
+        kwargs to be passed to the summary funciton of the `model`
+    taxonomy_mapping
+        A file with mapping of genomes to taxonomy
+
+
+    Returns
+    -------
+
+    trained_model
+        The model that has been trained by your trainer
+
+    """
 
     if model_kwargs is None:
         model_kwargs = dict()
@@ -64,7 +117,8 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
     external_classes = None
     if external_validation_ids is not None and \
             n_external_validation_reads is not None and \
-            external_validation_distribution is not None:
+            external_validation_distribution is not None and \
+            external_validation_classes is not None:
         data_downloader(external_validation_ids,
                         output_directory=data_directory,
                         channel=channel)
@@ -73,11 +127,19 @@ def trainer(model: BaseModel, distribution: List[float], total_reads: int,
             length, external_validation_ids, data_directory, random_seed + 5)
 
         external_validation = True
-        external_classes = id_to_lineage(external_ids, level, channel)
+
+        ext_depths = [round(val * n_external_validation_reads) for val in
+                      external_validation_distribution]
+        list_of_ext_classes = [[class_] * depth for class_, depth in zip(
+            external_validation_classes, ext_depths)]
+
+        external_classes = [item for sublist in list_of_ext_classes for item
+                            in sublist]
 
     elif external_validation_ids is not None or \
             n_external_validation_reads is not None or \
-            external_validation_distribution is not None:
+            external_validation_distribution is not None or \
+            external_validation_classes is not None:
         raise ValueError('If any external validation parameters are '
                          'specified, all must be specified.')
 
