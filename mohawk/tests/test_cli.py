@@ -1,10 +1,6 @@
-import unittest
+from mohawk.tests import testing
 
 
-class MyTestCase(unittest.TestCase):
+class TestCLI(testing.MohawkTestCase):
     def test_something(self):
-        self.assertEqual(True, False)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        self.assertEqual(True, True)
