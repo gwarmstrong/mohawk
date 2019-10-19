@@ -89,13 +89,13 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
               help='Uses gpu (if available) when True')
 @click.option('--batch-size', type=int, default=64, required=False,
               help='Size of batches to use for training')
-@click.option('--data-directory', type=click.Path(exists=True),
+@click.option('--data-dir', type=click.Path(exists=True),
               default=os.curdir, required=False,
               help="Directory to look for data or to store data when it is "
                    "downloaded")
 def train(model_name, genome_ids, external_validation_ids, lr, epochs,
           summarize, log_dir, summary_interval, train_ratio, length, seed,
-          concise_summary, gpu, batch_size, data_directory):
+          concise_summary, gpu, batch_size, data_dir):
     # TODO throw better error
     model = model_names_to_obj[model_name]
 
@@ -117,7 +117,7 @@ def train(model_name, genome_ids, external_validation_ids, lr, epochs,
     summary_kwargs = {'concise': concise_summary}
 
     trainer(model, n_reads, length, train_ratio, id_list=id_list,
-            distribution=distribution, data_directory=data_directory,
+            distribution=distribution, data_directory=data_dir,
             random_seed=seed, batch_size=batch_size,
             train_kwargs=train_kwargs, summary_kwargs=summary_kwargs,
             n_external_validation_reads=ext_reads,
@@ -132,10 +132,10 @@ def train(model_name, genome_ids, external_validation_ids, lr, epochs,
 
 
 def id_file_loader(genome_ids):
-    id_df = pd.read_csv(genome_ids)
+    id_df = pd.read_csv(genome_ids, sep='\t')
     id_list = id_df['id']
     n_reads_by_genome = id_df['n_reads']
-    n_reads = n_reads_by_genome.sum()
+    n_reads = int(n_reads_by_genome.sum())
     distribution = n_reads_by_genome / n_reads
     if 'class' in id_df.columns:
         classes = id_df['class']
