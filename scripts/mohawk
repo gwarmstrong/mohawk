@@ -5,7 +5,7 @@ import click
 from mohawk.classify import classify as classify_dl
 from mohawk.trainer import trainer
 from mohawk.models import (SmallConvNet, ConvNet2, ConvNetAvg, ConvNetAvg2,
-    ConvNetAvg3, ConvNetAvg4, ConvNetAvg5, ConvNetAvg6)
+                           ConvNetAvg3, ConvNetAvg4, ConvNetAvg5, ConvNetAvg6)
 import pandas as pd
 
 
@@ -46,7 +46,7 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
                       'ConvNetAvg4': ConvNetAvg4,
                       'ConvNetAvg5': ConvNetAvg5,
                       'ConvNetAvg6': ConvNetAvg6
-}
+                      }
 
 
 @mohawk.command()

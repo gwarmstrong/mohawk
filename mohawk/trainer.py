@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from mohawk.data_downloader import data_downloader
-from mohawk.simulation import simulate_from_genomes, id_to_lineage
+from mohawk.simulation import simulate_from_genomes
 from mohawk.dataset import SequenceDataset
 from typing import Optional, List
 from mohawk.models import BaseModel

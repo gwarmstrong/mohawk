@@ -21,7 +21,7 @@ script:
   # run unit tests (try multiple times in case of url timeout error)
   - travis_retry nosetests -v mohawk --with-coverage --cover-package=mohawk
   # lint
-  - flake8 mohawk/ setup.py
+  - flake8 mohawk/ setup.py scripts/mohawk
 
 after_success:
   - coveralls
