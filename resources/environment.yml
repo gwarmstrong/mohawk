@@ -1,7 +1,6 @@
 name: mohawk
 channels:
   - pytorch
-  - etetoolkit
   - defaults
   - bioconda
   - caffe2
@@ -12,7 +11,7 @@ dependencies:
   - pandas=0.24.2
   - pip=19.1.1
   - python<=3.6.9
-  - pytorch=1.2
+  - pytorch=1.3
   - scikit-bio=0.5.2
   - scikit-learn=0.21.2
   - torchvision=0.3.0
