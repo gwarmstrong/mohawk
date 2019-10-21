@@ -1,11 +1,8 @@
 import os
 import numpy as np
-import pandas as pd
 import skbio
 from typing import List, Optional
 
-from mohawk.utils import _get_taxonomy, representative_genomes_lineage, \
-    complete_genomes_lineage
 from mohawk._format import sample_from_contig_set
 
 
@@ -44,43 +41,3 @@ def simulate_from_genomes(distribution: List[float], total_reads: int,
            range(depth)]
 
     return reads, ids
-
-
-def id_to_lineage(ids: List[str],
-                  level: str,
-                  channel: Optional[str] = 'representative') -> List[str]:
-    """
-
-    Parameters
-    ----------
-    ids
-        List of assembly accession ids
-    level
-        Taxonomic level to use for class labels
-        Options: ['superkingdom', 'phylum', 'class', 'order', 'family',
-          'genus', 'species']
-    channel
-        The set of assembly accessions that should be checked for the
-          ids in `ids`
-
-    Returns
-    -------
-    List[str]
-        Each entry is the taxonomic classification at `level` for
-          each id
-
-    """
-
-    if channel == 'representative':
-        lineage_info = pd.read_csv(representative_genomes_lineage(),
-                                   sep='\t', index_col=0)
-    elif channel == 'complete':
-        lineage_info = pd.read_csv(complete_genomes_lineage(), sep='\t',
-                                   index_col=0)
-    elif os.path.isfile(channel):
-        lineage_info = pd.read_csv(channel, sep='\t', index_col=0)
-    else:
-        raise ValueError("Invalid choice for `channel`. Options are "
-                         "'representative' and 'complete'.")
-
-    return [_get_taxonomy(id_, lineage_info, level) for id_ in ids]

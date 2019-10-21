@@ -74,16 +74,6 @@ def complete_genomes_file() -> BufferedReader:
                                   'refseq_complete_genomes_ftp.txt')
 
 
-def representative_genomes_lineage():
-    return _fetch_resource_stream('mohawk.resources',
-                                  'refseq_representative_genomes_lineage.txt')
-
-
-def complete_genomes_lineage():
-    return _fetch_resource_stream('mohawk.resources',
-                                  'refseq_complete_genomes_lineage.txt')
-
-
 def _fetch_resource_stream(location, name):
     if resource_exists(location, name):
         return resource_stream(location, name)
