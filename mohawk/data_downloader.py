@@ -5,7 +5,7 @@ import pandas as pd
 from ftplib import FTP
 from typing import List, Optional
 from mohawk.utils import _ftp_path, get_zipped_fasta_name, gz_stripper, \
-    representative_genomes_file, complete_genomes_file
+    default_metadata
 
 
 def _ncbi_ftp_downloader(id_list: List[str],
@@ -224,19 +224,17 @@ def _ensure_all_data(id_list: List[str],
 
 def data_downloader(genome_ids: List[str],
                     output_directory: Optional[str] = None,
-                    channel: Optional[str] = 'representative') -> List[str]:
+                    metadata: Optional[str] = None) -> List[str]:
     """
 
     Parameters
     ----------
     genome_ids
-        A list of assembly accession id's to ensure from NCBI
+        A list of assembly accession id's
     output_directory
         Directory to look for and save data into to
-    channel, optional
-        # numpy docs style ?
-        Choice between 'representative' and 'complete', describing criteria
-        NCBI genomes must meet to download
+    metadata
+        A file containing metadata for the genomes to be downloaded
 
     Returns
     -------
@@ -251,19 +249,24 @@ def data_downloader(genome_ids: List[str],
         If an invalid channel is selected
 
     """
-
-    if channel == 'representative':
-        genomes_metadata = pd.read_csv(representative_genomes_file(),
+    metadata_cols = ['ftp_path', '# assembly_accession']
+    if metadata is None:
+        genomes_metadata = pd.read_csv(default_metadata(),
                                        sep='\t', index_col=0)
-    elif channel == 'complete':
-        genomes_metadata = pd.read_csv(complete_genomes_file(), sep='\t',
+    elif os.path.exists(metadata):
+        genomes_metadata = pd.read_csv(metadata, sep='\t',
                                        index_col=0)
+        if not all(genomes_metadata.columns.contains(val_) for val_ in
+                   metadata_cols):
+            raise ValueError("metadata must at least contain columns "
+                             "for all of the following: {}"
+                             .format(metadata_cols))
     else:
-        raise ValueError("Invalid choice for `channel`. Options are "
-                         "'representative' and 'complete'.")
+        raise ValueError("Argument `metadata` must be a valid filepath or "
+                         "default `None`")
 
     if output_directory is None:
-        output_directory = os.path.curdir()
+        output_directory = os.path.curdir
 
     possible_ids = set(genomes_metadata.index)
     for id_ in genome_ids:

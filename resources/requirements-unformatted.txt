@@ -1,9 +1,0 @@
-conda install -c bioconda ncbi-genome-download
-conda install -c etetoolkit ete3 ete_toolchain
-
-### PyTorch:
-#### for mac:
-conda install pytorch -c pytorch
-#### for linux:
-conda install pytorch cudatoolkit=9.0 -c pytorch
-

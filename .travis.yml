@@ -1,5 +1,8 @@
 language: python
 
+env:
+  - build=0
+
 before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
@@ -21,7 +24,8 @@ script:
   # run unit tests (try multiple times in case of url timeout error)
   - travis_retry nosetests -v mohawk --with-coverage --cover-package=mohawk
   # lint
-  - flake8 mohawk/ setup.py
+  - flake8 mohawk/ setup.py scripts/mohawk
+  - mohawk
 
 after_success:
   - coveralls
