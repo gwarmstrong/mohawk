@@ -65,6 +65,9 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
                    '`genome-ids`',
               required=False)  # TODO do check for whether it contains ids
 # in `genome-ids`
+@click.option('--metadata', type=click.Path(exists=True), default=None,
+              help='File containing assembly accession id\'s and ftp paths '
+                   'in the case that data needs to be downloaded')
 @click.option('--lr', type=float, default=0.0001, required=False,
               help='Portion of simulation data to train on. (1-train_ratio) '
                    'will be used for assessing performance on the ')
@@ -93,9 +96,9 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
               default=os.curdir, required=False,
               help="Directory to look for data or to store data when it is "
                    "downloaded")
-def train(model_name, genome_ids, external_validation_ids, lr, epochs,
-          summarize, log_dir, summary_interval, train_ratio, length, seed,
-          concise_summary, gpu, batch_size, data_dir):
+def train(model_name, genome_ids, external_validation_ids, metadata, lr,
+          epochs, summarize, log_dir, summary_interval, train_ratio, length,
+          seed, concise_summary, gpu, batch_size, data_dir):
     # TODO throw better error
     model = model_names_to_obj[model_name]
 
@@ -117,8 +120,8 @@ def train(model_name, genome_ids, external_validation_ids, lr, epochs,
     summary_kwargs = {'concise': concise_summary}
 
     trainer(model, n_reads, length, train_ratio, id_list=id_list,
-            distribution=distribution, batch_size=batch_size,
-            data_directory=data_dir, random_seed=seed,
+            metadata=metadata, distribution=distribution, class_list=classes,
+            batch_size=batch_size, data_directory=data_dir, random_seed=seed,
             external_validation_ids=ext_ids,
             n_external_validation_reads=ext_reads,
             external_validation_distribution=ext_dist,
@@ -138,10 +141,6 @@ def id_file_loader(genome_ids):
         classes = None
 
     return id_list, distribution, classes, n_reads
-
-# TODO needs seed, number of reads to simulate, train_ratio, batch_size,
-#  gpu, summary_interval, epochs, summarize, learning_rate, log_dir,
-#  concise=True, config file
 
 
 if __name__ == '__main__':

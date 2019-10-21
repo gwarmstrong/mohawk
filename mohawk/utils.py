@@ -9,8 +9,8 @@ def _ftp_path(id_, genomes_metadata):
 
 
 def get_zipped_fasta_name(id_, genomes_metadata) -> str:
-
-    return genomes_metadata['fna_gz_name'].loc[id_]
+    return genomes_metadata['ftp_path'].loc[id_].split('/')[-1] + \
+           '_genomic.fna.gz'
 
 
 def gz_stripper(filename: str) -> str:
@@ -21,18 +21,15 @@ def gz_stripper(filename: str) -> str:
 
 
 # TODO flat directory structure
-def full_fna_path(sequence_directory, id_, lineage_info):
-    fasta_gz_name = get_zipped_fasta_name(id_, lineage_info)
+def full_fna_path(sequence_directory, id_, metadata):
+    fasta_gz_name = get_zipped_fasta_name(id_, metadata)
     fasta_name = gz_stripper(fasta_gz_name)
     return os.path.join(sequence_directory, id_, fasta_name)
 
 
-def _get_taxonomy(id_, lineage_info, level):
-    return lineage_info[level].loc[id_]
-
-
-def representative_genomes_file() -> BufferedReader:
-    """Returns a buffer containing ftp links to RefSeq
+def default_metadata() -> BufferedReader:
+    """"Returns a buffer containing the NCBI metadata file included with
+    this package
 
     Returns
     -------
@@ -49,29 +46,7 @@ def representative_genomes_file() -> BufferedReader:
 
     """
     return _fetch_resource_stream('mohawk.resources',
-                                  'refseq_representative_genomes_ftp.txt')
-
-
-def complete_genomes_file() -> BufferedReader:
-    """Returns a buffer containing ftp links to RefSeq
-
-    Returns
-    -------
-
-    BufferedReader
-        Contains the ftp links to the 'Complete' RefSeq genomes
-
-
-    Raises
-    ------
-
-    IOError
-        If unable to find the resource
-
-    """
-
-    return _fetch_resource_stream('mohawk.resources',
-                                  'refseq_complete_genomes_ftp.txt')
+                                  'assembly_summary_refseq.txt')
 
 
 def _fetch_resource_stream(location, name):

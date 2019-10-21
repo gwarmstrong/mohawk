@@ -17,7 +17,7 @@ class TestTrainer(testing.MohawkTestCase):
         ]
         self.classes = [
                         'class1',
-                        'class2'
+                        'class2',
                         'class2'
                         ]
         self.total_reads = 200

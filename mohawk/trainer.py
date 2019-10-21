@@ -13,15 +13,13 @@ from torch.utils.data import DataLoader
 def trainer(model: BaseModel, total_reads: int, length: int,
             train_ratio: float, id_list: Optional[List[str]],
             distribution: List[float], class_list: Optional[List] = None,
-            channel: Optional[str] = 'representative',
-            batch_size: Optional[int] = 1,
+            metadata: Optional[str] = None, batch_size: Optional[int] = 1,
             data_directory: Optional[str] = None,
             random_seed: Optional[int] = None,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
             external_validation_classes: Optional[List] = None,
-            taxonomy_mapping: Optional[str] = None,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None) -> BaseModel:
@@ -43,9 +41,9 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         The relative amount of each id in id_list to use
     class_list
         The class of each id in id_list
-    channel
-        Choice between 'representative' and 'complete', describing criteria
-        NCBI genomes must meet to download
+    metadata
+        Path to metadata containing a '# assembly_accession' and 'ftp_path'
+        column (NCBI assembly summary format)
     batch_size
         Size of batches for neural network training
     data_directory
@@ -62,8 +60,6 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         How to distribute the reads amongst the external validation ID's
     external_validation_classes
         The class of each id in external_validation_ids
-    taxonomy_mapping
-        A file with mapping of genomes to taxonomy
     model_kwargs
         kwargs to be passed to the `model`
     train_kwargs
@@ -90,19 +86,16 @@ def trainer(model: BaseModel, total_reads: int, length: int,
 
     # If id_list is not None, use the specified id's
     if id_list is not None:
-        # TODO WARN if taxonomy_mapping is not None
-        file_list = data_downloader(id_list,
-                                    output_directory=data_directory,
-                                    channel=channel)
-    # if id_list _is_ None, just use whatever is in the directory (handled
-    # by simulate_from_genomes)
-    # TODO may need some error catching for if data_directory is empty
-    elif taxonomy_mapping is not None:
+        file_list = data_downloader(id_list, output_directory=data_directory,
+                                    metadata=metadata)
+    # if id_list _is_ None, just use whatever is in the directory
+    elif os.path.exists(data_directory) and \
+            len(os.listdir(data_directory)) > 0:
         file_list = [os.path.join(data_directory, file_) for file_ in
                      os.listdir(data_directory)]
     else:
-        raise ValueError('A value must be supplied for taxonomy_mapping if '
-                         'id_list is None')
+        raise FileExistsError('Data directory must exist and contain '
+                              'data if `id_list` is not supplied.')
 
     reads, ids = simulate_from_genomes(distribution, total_reads, length,
                                        file_list, data_directory, random_seed)
@@ -110,7 +103,6 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     id_depths = [round(val * total_reads) for val in distribution]
     if class_list is None:
         class_list = id_list
-
     list_of_classes = [[class_] * depth for class_, depth in
                        zip(class_list, id_depths)]
     class_list = [item for sublist in list_of_classes for item in sublist]
@@ -122,8 +114,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
             external_validation_distribution is not None and \
             external_validation_classes is not None:
         data_downloader(external_validation_ids,
-                        output_directory=data_directory,
-                        channel=channel)
+                        output_directory=data_directory, metadata=metadata)
         external_reads, external_ids = simulate_from_genomes(
             external_validation_distribution, n_external_validation_reads,
             length, external_validation_ids, data_directory, random_seed + 5)
@@ -179,17 +170,13 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     if train_kwargs['gpu']:
         training_model.cuda()
 
-    # TODO have a separate directory for trained models
-    # TODO as well as prefix/suffix option for naming
+    # TODO prefix/suffix option for naming
     training_model.fit(train_dataloader,
                        val_dataset=val_dataloader,
                        external_dataset=external_dataloader,
                        seed=random_seed,
                        summary_kwargs=summary_kwargs,
                        **train_kwargs)
-
-    # TODO maybe some functionality for holding onto the best model
-    #  parameters ? -> I think would entail making a deepcopy of best
 
     return training_model
 

@@ -37,4 +37,8 @@ mohawk classify --model /path/to/model \
 
 ```
 
+## Metadata
+An up-to-date assembly summary from RefSeq can be obtained from:
+ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/assembly_summary_refseq.txt
+
 

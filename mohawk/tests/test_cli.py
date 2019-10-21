@@ -21,6 +21,4 @@ class TestCLI(testing.MohawkTestCase):
                       '--data-dir', data_dir
                       ]
         result = runner.invoke(mohawk_cli.train, args=train_args)
-        import traceback
-        traceback.print_tb(result.exc_info[2])
         self.assertEqual(result.exit_code, 0)
