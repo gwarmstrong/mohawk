@@ -146,9 +146,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                          'specified, all must be specified.')
 
     # split into train and validation
-    num_samples = len(class_list)
-
-    train_indices, val_indices = train_val_split(num_samples, train_ratio,
+    train_indices, val_indices = train_val_split(total_reads, train_ratio,
                                                  random_seed=random_seed)
 
     # create Dataset and DataLoader for train and validation
