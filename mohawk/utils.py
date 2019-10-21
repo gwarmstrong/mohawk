@@ -53,5 +53,5 @@ def _fetch_resource_stream(location, name):
     if resource_exists(location, name):
         return resource_stream(location, name)
     else:
-        raise IOError('Unable to find package resource {}. Please run '
-                      '`setup_genome_downloads.py`.'.format((location, name)))
+        raise IOError('Unable to find package resource {}'
+                      .format((location, name)))

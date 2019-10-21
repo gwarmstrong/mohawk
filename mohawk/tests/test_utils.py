@@ -42,4 +42,3 @@ class TestResourceHelpers(unittest.TestCase):
         exp = '/path/to/dir/GCF_000001765.3/' \
               'GCF_000001765.3_Dpse_3.0_genomic.fna'
         self.assertEqual(full_fna_path(seq_dir, id_, self.metadata), exp)
-
