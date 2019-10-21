@@ -20,16 +20,15 @@ def trainer(model: BaseModel, total_reads: int, length: int,
             external_validation_ids: Optional[List[str]] = None,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
+            external_validation_classes: Optional[List] = None,
+            taxonomy_mapping: Optional[str] = None,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
-            summary_kwargs: Optional[dict] = None,
-            taxonomy_mapping: Optional[str] = None,
-            external_validation_classes: Optional[List] = None) -> BaseModel:
+            summary_kwargs: Optional[dict] = None) -> BaseModel:
     """
 
     Parameters
     ----------
-    external_validation_classes
     model
         An model class to use for training
     total_reads
@@ -61,14 +60,17 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         how many reads to sample from the external validation ids
     external_validation_distribution
         How to distribute the reads amongst the external validation ID's
+    external_validation_classes
+        The class of each id in external_validation_ids
+    taxonomy_mapping
+        A file with mapping of genomes to taxonomy
     model_kwargs
         kwargs to be passed to the `model`
     train_kwargs
         kwargs to be passed to the training function of the `model`
     summary_kwargs
         kwargs to be passed to the summary funciton of the `model`
-    taxonomy_mapping
-        A file with mapping of genomes to taxonomy
+
 
 
     Returns

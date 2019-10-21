@@ -117,18 +117,13 @@ def train(model_name, genome_ids, external_validation_ids, lr, epochs,
     summary_kwargs = {'concise': concise_summary}
 
     trainer(model, n_reads, length, train_ratio, id_list=id_list,
-            distribution=distribution, data_directory=data_dir,
-            random_seed=seed, batch_size=batch_size,
-            train_kwargs=train_kwargs, summary_kwargs=summary_kwargs,
-            n_external_validation_reads=ext_reads,
+            distribution=distribution, batch_size=batch_size,
+            data_directory=data_dir, random_seed=seed,
             external_validation_ids=ext_ids,
-            external_validation_classes=ext_classes,
-            external_validation_distribution=ext_dist)
-    # TODO distribution should be figured out from proportion of reads for
-    #  each genome and total reads figured out from sum of reads column in
-    #  `genome-ids` file
-    # TODO distribution noise False always for now, weight=False,
-    # TODO check for gpu torch.cuda.is_available()
+            n_external_validation_reads=ext_reads,
+            external_validation_distribution=ext_dist,
+            external_validation_classes=ext_classes, train_kwargs=train_kwargs,
+            summary_kwargs=summary_kwargs)
 
 
 def id_file_loader(genome_ids):
