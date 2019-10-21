@@ -25,6 +25,7 @@ script:
   - travis_retry nosetests -v mohawk --with-coverage --cover-package=mohawk
   # lint
   - flake8 mohawk/ setup.py scripts/mohawk
+  - mohawk
 
 after_success:
   - coveralls
