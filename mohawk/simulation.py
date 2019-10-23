@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import skbio
 from typing import List, Optional
@@ -18,9 +17,6 @@ def simulate_from_genomes(distribution: List[float], total_reads: int,
 
     if len(file_list) != len(distribution):
         raise ValueError("id_list and distribution must have the same shape")
-
-    if sequence_directory is None:
-        sequence_directory = os.path.curdir()
 
     # use multinomial to get number of reads for each id
     id_depths = [round(val * total_reads) for val in distribution]
