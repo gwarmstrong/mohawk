@@ -168,7 +168,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     # down training
     training_model.double()
 
-    log_dir = train_kwargs.get('log_dir', None)
+    log_dir = train_kwargs.pop('log_dir', None)
     log_dir = training_model.get_log_dir(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
     hparam_dict = dict()
@@ -177,7 +177,8 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                         kwarg in hparam_train_kwargs})
     hparam_dict.update(model_kwargs)
     hparam_dict.update({'model_type': model.__name__})
-    writer.add_hparams(hparam_dict)
+    metric_dict = dict()
+    writer.add_hparams(hparam_dict, metric_dict)
 
     if train_kwargs['gpu']:
         training_model.cuda()

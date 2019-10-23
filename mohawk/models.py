@@ -285,10 +285,9 @@ class BaseModel(nn.Module):
                                weight_decay=0)
 
         self.device = torch.device('cuda' if gpu else 'cpu')
-        # self.to(device)
 
         # put computational graph in tensorboard
-        data = next(train_dataset)
+        data = next(iter(train_dataset))
         writer.add_graph(self,
                          input_to_model=data['read'].to(self.device)
                          )
