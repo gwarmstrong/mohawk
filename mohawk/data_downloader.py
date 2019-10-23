@@ -271,8 +271,8 @@ def data_downloader(genome_ids: List[str],
     possible_ids = set(genomes_metadata.index)
     for id_ in genome_ids:
         if id_ not in possible_ids:
-            raise ValueError('Invalid assembly accession ID for this '
-                             'channel: {}'.format(id_))
+            raise ValueError('Assembly accession ID \'{}\' is not in metadata'
+                             .format(id_))
 
     # make sure all genomes are downloaded (download if not)
     fasta_filenames = _ensure_all_data(genome_ids,
