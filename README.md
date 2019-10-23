@@ -21,10 +21,20 @@ pip install -e .
 ## Usage
 ### Command Line Interface (CLI)
 
-Ultimately, there are plans to support training and using models with the
-mohawk module. Currently only classification has a full standalone API that
-can be accessed via the command line. For training models, see the example
-scripts in the `scripts/` directory.
+An example of using the `mohawk` API to train a neural
+network on some pre-specified genomes with designated
+classes on a given number of reads, you can use a command
+similar to the one shown below:
+
+```bash
+mohawk train --genome-ids example_input/min-red_0.1__n_4__group_0__genome-ids.txt \
+    --model-name ConvNetAvg \
+    --log-dir example_output \
+    --data-dir example_input/genomes \
+    --metadata example_input/wol_supplemental_metadata.tsv \
+    --train-ratio 0.8 \
+    --gpu True
+```
 
 An example of using the interface for using a pre-trained mohawk model 
 to classify reads from a `fastq` file is included below:
@@ -34,7 +44,6 @@ mohawk classify --model /path/to/model \
     --sequence-file /path/to/input/fastq \
     --output-file /path/to/ouput/file \
     --length 150
-
 ```
 
 ## Metadata
