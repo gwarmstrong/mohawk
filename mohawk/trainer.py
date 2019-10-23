@@ -7,6 +7,7 @@ from mohawk.dataset import SequenceDataset
 from typing import Optional, List
 from mohawk.models import BaseModel
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 
 # TODO current file_list, taxonomy setup needs to be re-worked...
@@ -167,15 +168,29 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     # down training
     training_model.double()
 
+    log_dir = train_kwargs.get('log_dir', None)
+    log_dir = training_model.get_log_dir(log_dir)
+    writer = SummaryWriter(log_dir=log_dir)
+    hparam_dict = dict()
+    hparam_train_kwargs = ['learning_rate', 'epochs', 'gpu']
+    hparam_dict.update({kwarg: train_kwargs[kwarg] for
+                        kwarg in hparam_train_kwargs})
+    hparam_dict.update(model_kwargs)
+    hparam_dict.update({'model_type': model.__name__})
+    writer.add_hparams(hparam_dict)
+
     if train_kwargs['gpu']:
         training_model.cuda()
 
     # TODO prefix/suffix option for naming
     training_model.fit(train_dataloader,
+                       log_dir=log_dir,
                        val_dataset=val_dataloader,
                        external_dataset=external_dataloader,
                        seed=random_seed,
                        summary_kwargs=summary_kwargs,
+                       log_dir_append_time=False,
+                       writer=writer,
                        **train_kwargs)
 
     return training_model

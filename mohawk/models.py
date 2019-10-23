@@ -257,6 +257,8 @@ class BaseModel(nn.Module):
             gpu: bool = False,
             summarize: bool = True,
             summary_kwargs: Optional[dict] = None,
+            writer: Optional[SummaryWriter] = None,
+            log_dir_append_time: Optional[bool] = True,
             **kwargs):
 
         if summary_kwargs is None:
@@ -271,8 +273,11 @@ class BaseModel(nn.Module):
         self.classes.sort()
         self.class_encoder = train_dataset.dataset.label_encoder
 
-        log_dir = self.get_log_dir(log_dir)
-        writer = SummaryWriter(log_dir=log_dir)
+        log_dir = self.get_log_dir(log_dir, append_time=log_dir_append_time)
+
+        if writer is None:
+            writer = SummaryWriter(log_dir=log_dir)
+
         model_dir = os.path.join(log_dir, 'models')
 
         optimizer = self.optim(self.parameters(),
@@ -282,12 +287,11 @@ class BaseModel(nn.Module):
         self.device = torch.device('cuda' if gpu else 'cpu')
         # self.to(device)
 
-        # put computational graph in tensorboard TODO declutter
-        for batch_index, data in enumerate(train_dataset):
-            if batch_index == 0:
-                writer.add_graph(self,
-                                 input_to_model=data['read'].to(self.device)
-                                 )
+        # put computational graph in tensorboard
+        data = next(train_dataset)
+        writer.add_graph(self,
+                         input_to_model=data['read'].to(self.device)
+                         )
 
         # run for an extra epoch to hit a multiple of 10 # TODO should go?
         for index_epoch in range(epochs + 1):
