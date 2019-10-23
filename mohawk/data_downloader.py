@@ -252,10 +252,10 @@ def data_downloader(genome_ids: List[str],
     metadata_cols = ['ftp_path', '# assembly_accession']
     if metadata is None:
         genomes_metadata = pd.read_csv(default_metadata(),
-                                       sep='\t', index_col=0)
+                                       sep='\t', index_col=False)
     elif os.path.exists(metadata):
         genomes_metadata = pd.read_csv(metadata, sep='\t',
-                                       index_col=0)
+                                       index_col=False)
         if not all(genomes_metadata.columns.contains(val_) for val_ in
                    metadata_cols):
             raise ValueError("metadata must at least contain columns "
@@ -268,6 +268,8 @@ def data_downloader(genome_ids: List[str],
     if output_directory is None:
         output_directory = os.path.curdir
 
+    print(genomes_metadata.head())
+    genomes_metadata.set_index('# assembly_accession', inplace=True)
     possible_ids = set(genomes_metadata.index)
     for id_ in genome_ids:
         if id_ not in possible_ids:
