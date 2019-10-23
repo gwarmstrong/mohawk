@@ -268,7 +268,6 @@ def data_downloader(genome_ids: List[str],
     if output_directory is None:
         output_directory = os.path.curdir
 
-    print(genomes_metadata.head())
     genomes_metadata.set_index('# assembly_accession', inplace=True)
     possible_ids = set(genomes_metadata.index)
     for id_ in genome_ids:
