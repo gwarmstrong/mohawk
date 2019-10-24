@@ -206,15 +206,15 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     hparam_dict.update({'model_type': model.__name__,
                         'random-seed': mod.seed})
 
-    metric_dict = dict({'best-val-accuracy': mod.best_val_accuracy,
-                        'best-val-loss': mod.best_val_loss,
-                        'best-val-epoch': mod.best_val_epoch,
-                        'best-val-train-accuracy': mod.best_val_train_accuracy,
-                        'best-val-train-loss': mod.best_val_train_loss,
-                        'best-val-time': mod.best_val_time,
-                        'dataset-length': len(train_dataloader),
-                        'total-time': end_time - start_time,
-                        })
+    metric_dict = {'best-val-accuracy': mod.best_val_accuracy,
+                   'best-val-loss': mod.best_val_loss,
+                   'best-val-epoch': mod.best_val_epoch,
+                   'best-val-train-accuracy': mod.best_val_train_accuracy,
+                   'best-val-train-loss': mod.best_val_train_loss,
+                   'best-val-time': mod.best_val_time,
+                   'dataset-length': len(train_dataloader),
+                   'total-time': end_time - start_time,
+                   }
     print(metric_dict)
     print(hparam_dict)
     writer.add_hparams(hparam_dict, metric_dict)
