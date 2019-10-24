@@ -216,8 +216,6 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                    'val-dataset-length': len(val_dataloader.dataset),
                    'total-time': end_time - start_time,
                    }
-    print(metric_dict)
-    print(hparam_dict)
     writer.add_hparams(hparam_dict, metric_dict)
 
     writer.close()
