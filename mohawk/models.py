@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,8 +25,14 @@ class BaseModel(nn.Module):
         self.device = None
         self.class_encoder = None
         self.seed = seed
+        self.best_val_accuracy = -1
+        self.best_val_loss = np.inf
+        self.best_val_train_accuracy = -1
+        self.best_val_train_loss = np.inf
+        self.best_val_epoch = -1
+        self.best_val_time = -1
         if seed is not None:
-            torch.manual_seed(self.seed+2)
+            torch.manual_seed(self.seed)
 
     def reinitialize(self):
         pass
@@ -257,13 +264,22 @@ class BaseModel(nn.Module):
             gpu: bool = False,
             summarize: bool = True,
             summary_kwargs: Optional[dict] = None,
+            writer: Optional[SummaryWriter] = None,
+            log_dir_append_time: Optional[bool] = True,
+            start_time: Optional[float] = None,
             **kwargs):
 
         if summary_kwargs is None:
             summary_kwargs = dict()
 
+        if start_time is None:
+            start_time = time.time()
+
         if seed is not None:
-            torch.manual_seed(seed+3)
+            self.seed = seed
+            torch.manual_seed(seed)
+        else:
+            self.seed = np.random.randint(0, 10000)
 
         save_model = save_interval is not None
 
@@ -271,8 +287,11 @@ class BaseModel(nn.Module):
         self.classes.sort()
         self.class_encoder = train_dataset.dataset.label_encoder
 
-        log_dir = self.get_log_dir(log_dir)
-        writer = SummaryWriter(log_dir=log_dir)
+        log_dir = self.get_log_dir(log_dir, append_time=log_dir_append_time)
+
+        if writer is None:
+            writer = SummaryWriter(log_dir=log_dir)
+
         model_dir = os.path.join(log_dir, 'models')
 
         optimizer = self.optim(self.parameters(),
@@ -280,14 +299,12 @@ class BaseModel(nn.Module):
                                weight_decay=0)
 
         self.device = torch.device('cuda' if gpu else 'cpu')
-        # self.to(device)
 
-        # put computational graph in tensorboard TODO declutter
-        for batch_index, data in enumerate(train_dataset):
-            if batch_index == 0:
-                writer.add_graph(self,
-                                 input_to_model=data['read'].to(self.device)
-                                 )
+        # put computational graph in tensorboard
+        data = next(iter(train_dataset))
+        writer.add_graph(self,
+                         input_to_model=data['read'].to(self.device)
+                         )
 
         # run for an extra epoch to hit a multiple of 10 # TODO should go?
         for index_epoch in range(epochs + 1):
@@ -296,12 +313,11 @@ class BaseModel(nn.Module):
                 self.backward_step(y, y_pred, optimizer)
 
             if summarize and (index_epoch % summary_interval == 0):
-                self.summarize(writer,
-                               counter=index_epoch,
+                self.summarize(writer, epoch=index_epoch,
+                               start_time=start_time,
                                train_dataset=train_dataset,
                                val_dataset=val_dataset,
-                               external_dataset=external_dataset,
-                               **summary_kwargs)
+                               external_dataset=external_dataset)
 
             if save_model and (index_epoch % save_interval == 0):
                 self.save(epoch=index_epoch,
@@ -309,16 +325,9 @@ class BaseModel(nn.Module):
                           log_dir=model_dir,
                           optimizer=optimizer)
 
-        writer.close()
-
-    def summarize(self,
-                  writer,
-                  counter=0,
-                  average='weighted',
+    def summarize(self, writer, epoch, start_time, average='weighted',
                   concise=True,
-                  train_dataset=None,
-                  val_dataset=None,
-                  external_dataset=None,
+                  train_dataset=None, val_dataset=None, external_dataset=None,
                   classify_threshold=None):
 
         datasets = {'train': train_dataset,
@@ -338,7 +347,7 @@ class BaseModel(nn.Module):
             for metric in scalar_metrics:
                 writer.add_scalars(metric,
                                    reshaped_stats[metric],
-                                   counter)
+                                   epoch)
             # plot confusion matrix:
             metric = 'confusion-matrix'
             datasets = ['train', 'val']
@@ -347,17 +356,27 @@ class BaseModel(nn.Module):
             for dataset in datasets:
                 writer.add_figure('{}/{}'.format(metric, dataset),
                                   reshaped_stats[metric][dataset],
-                                  counter)
+                                  epoch)
 
             for name, acc in reshaped_stats['accuracy-global'].items():
-                print("IT: {}, {} ACC: {}".format(counter,
+                print("IT: {}, {} ACC: {}".format(epoch,
                                                   name,
                                                   acc))
+
+            if reshaped_stats['avg-loss']['val'] < self.best_val_loss:
+                self.best_val_epoch = epoch
+                self.best_val_loss = reshaped_stats['avg-loss']['val']
+                self.best_val_accuracy = reshaped_stats['accuracy-global'][
+                     'val']
+                self.best_val_train_loss = reshaped_stats['avg-loss']['train']
+                self.best_val_train_accuracy = reshaped_stats[
+                    'accuracy-global']['train']
+                self.best_val_time = time.time() - start_time
 
         else:
             # TODO could have self.add_scalar and self.add_histogram methods ?
             accuracies = self.summary_helper(datasets, self.accuracy)
-            writer.add_scalars('accuracy-global', accuracies, counter)
+            writer.add_scalars('accuracy-global', accuracies, epoch)
 
             if classify_threshold is not None:
                 threshold_accuracies = self.summary_helper(
@@ -365,25 +384,25 @@ class BaseModel(nn.Module):
                 writer.add_scalars('accuracy-threshold_{}'.format(
                     classify_threshold),
                     threshold_accuracies,
-                    counter)
+                    epoch)
 
             avg_losses = self.summary_helper(datasets, self.avg_loss)
             writer.add_scalars('loss',
                                avg_losses,
-                               counter)
+                               epoch)
 
             f1_scores = self.summary_helper(datasets, self.f1_score_,
                                             {'average': average})
             writer.add_scalars('f1-score',
                                f1_scores,
-                               counter)
+                               epoch)
 
             max_softmax = self.summary_helper(datasets, self.max_softmax)
             # writing this one is weird
             for name, softmax in max_softmax.items():
                 writer.add_histogram('max_softmax/{}/all'.format(name),
                                      softmax,
-                                     counter)
+                                     epoch)
 
             max_softmax_split = self.summary_helper(datasets,
                                                     self.max_softmax,
@@ -393,15 +412,15 @@ class BaseModel(nn.Module):
                 if correct is not None:
                     writer.add_histogram('max_softmax/{}/correct'.format(name),
                                          correct,
-                                         counter)
+                                         epoch)
                 if incorrect is not None:
                     writer.add_histogram('max_softmax/{}/incorrect'.format(
                         name),
                         incorrect,
-                        counter)
+                        epoch)
 
             for name, acc in accuracies.items():
-                print("IT: {}, {} ACC: {}".format(counter,
+                print("IT: {}, {} ACC: {}".format(epoch,
                                                   name,
                                                   acc))
 
