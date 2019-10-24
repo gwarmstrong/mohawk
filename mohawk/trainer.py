@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 import pandas as pd
 from mohawk.data_downloader import data_downloader
@@ -21,6 +22,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
             n_external_validation_reads: Optional[int] = None,
             external_validation_distribution: Optional[List[float]] = None,
             external_validation_classes: Optional[List] = None,
+            start_time: Optional[float] = None,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None) -> BaseModel:
@@ -61,6 +63,10 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         How to distribute the reads amongst the external validation ID's
     external_validation_classes
         The class of each id in external_validation_ids
+    start_time
+        An object for tracking amount of time since training has started.
+        Can be passed in for convenience, but will be initialized if not
+        provided
     model_kwargs
         kwargs to be passed to the `model`
     train_kwargs
@@ -84,6 +90,8 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         train_kwargs = dict()
     if summary_kwargs is None:
         summary_kwargs = dict()
+    if start_time is None:
+        start_time = time.time()
 
     # If id_list is not None, use the specified id's
     if id_list is not None:
@@ -171,14 +179,6 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     log_dir = train_kwargs.pop('log_dir', None)
     log_dir = training_model.get_log_dir(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
-    hparam_dict = dict()
-    hparam_train_kwargs = ['learning_rate', 'epochs', 'gpu']
-    hparam_dict.update({kwarg: train_kwargs[kwarg] for
-                        kwarg in hparam_train_kwargs})
-    hparam_dict.update(model_kwargs)
-    hparam_dict.update({'model_type': model.__name__})
-    metric_dict = dict({'accuracy-global': None, 'avg-loss': None})
-    writer.add_hparams(hparam_dict, metric_dict)
 
     if train_kwargs['gpu']:
         training_model.cuda()
@@ -192,7 +192,34 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                        summary_kwargs=summary_kwargs,
                        log_dir_append_time=False,
                        writer=writer,
+                       start_time=start_time,
                        **train_kwargs)
+
+    end_time = time.time()
+    mod = training_model
+
+    hparam_dict = dict()
+    hparam_train_kwargs = ['learning_rate', 'epochs', 'gpu']
+    hparam_dict.update({kwarg: train_kwargs[kwarg] for
+                        kwarg in hparam_train_kwargs})
+    hparam_dict.update(model_kwargs)
+    hparam_dict.update({'model_type': model.__name__,
+                        'random-seed': mod.seed})
+
+    metric_dict = dict({'best-val-accuracy': mod.best_val_accuracy,
+                        'best-val-loss': mod.best_val_loss,
+                        'best-val-epoch': mod.best_val_epoch,
+                        'best-val-train-accuracy': mod.best_val_train_accuracy,
+                        'best-val-train-loss': mod.best_val_train_loss,
+                        'best-val-time': mod.best_val_time,
+                        'dataset-length': len(train_dataloader),
+                        'total-time': end_time - start_time,
+                        })
+    print(metric_dict)
+    print(hparam_dict)
+    writer.add_hparams(hparam_dict, metric_dict)
+
+    writer.close()
 
     return training_model
 

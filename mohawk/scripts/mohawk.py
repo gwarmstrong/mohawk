@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import time
 import os
 import click
 from mohawk.classify import classify as classify_dl
@@ -100,6 +100,7 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
           epochs, summarize, log_dir, summary_interval, train_ratio, length,
           seed, concise_summary, gpu, batch_size, data_dir):
     # TODO throw better error
+    start_time = time.time()
     model = model_names_to_obj[model_name]
 
     id_list, distribution, classes, n_reads = id_file_loader(genome_ids)
@@ -125,7 +126,8 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
             external_validation_ids=ext_ids,
             n_external_validation_reads=ext_reads,
             external_validation_distribution=ext_dist,
-            external_validation_classes=ext_classes, train_kwargs=train_kwargs,
+            external_validation_classes=ext_classes,
+            start_time=start_time, train_kwargs=train_kwargs,
             summary_kwargs=summary_kwargs)
 
 
