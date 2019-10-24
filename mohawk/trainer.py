@@ -212,7 +212,8 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                    'best-val-train-accuracy': mod.best_val_train_accuracy,
                    'best-val-train-loss': mod.best_val_train_loss,
                    'best-val-time': mod.best_val_time,
-                   'dataset-length': len(train_dataloader),
+                   'train-dataset-length': len(train_dataloader.dataset),
+                   'val-dataset-length': len(val_dataloader.dataset),
                    'total-time': end_time - start_time,
                    }
     print(metric_dict)
