@@ -177,7 +177,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
                         kwarg in hparam_train_kwargs})
     hparam_dict.update(model_kwargs)
     hparam_dict.update({'model_type': model.__name__})
-    metric_dict = dict()
+    metric_dict = dict({'accuracy-global': None, 'avg-loss': None})
     writer.add_hparams(hparam_dict, metric_dict)
 
     if train_kwargs['gpu']:
