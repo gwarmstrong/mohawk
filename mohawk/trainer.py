@@ -23,6 +23,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
             external_validation_distribution: Optional[List[float]] = None,
             external_validation_classes: Optional[List] = None,
             start_time: Optional[float] = None,
+            append_time: Optional[bool] = True,
             additional_hparams: Optional[dict] = None,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
@@ -68,6 +69,9 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         An object for tracking amount of time since training has started.
         Can be passed in for convenience, but will be initialized if not
         provided
+    append_time
+        Indicates whether the time should be appended to the log_dir,
+        cannot be False if log_dir is None
     additional_hparams
         hyper-parameters that can be passed into to be saved with the model
     model_kwargs
@@ -97,6 +101,15 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         summary_kwargs = dict()
     if start_time is None:
         start_time = time.time()
+
+    log_dir = train_kwargs.pop('log_dir', None)
+    if append_time and not log_dir:
+        # this error is to avoid multiple models accidentally getting the
+        #  written to the same directory. Take care to use different
+        #  log_dirs if using append_time=False
+        raise ValueError("'append_time' can cannot be False when 'log_dir' "
+                         "is None")
+    log_dir = model.get_log_dir(log_dir, append_time=append_time)
 
     # If id_list is not None, use the specified id's
     if id_list is not None:
@@ -181,8 +194,6 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     # down training
     training_model.double()
 
-    log_dir = train_kwargs.pop('log_dir', None)
-    log_dir = training_model.get_log_dir(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
 
     if train_kwargs['gpu']:
