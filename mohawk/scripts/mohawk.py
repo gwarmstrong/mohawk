@@ -101,10 +101,14 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
               help="A tab separated file containing two columns, with the "
                    "name of hyper-parameter in the first column, and the "
                    "value in the second column, and no header.")
+@click.option('--append-time', type=str, default=True, required=False,
+              help="Whether the time should be appended to the supplied "
+                   "log_dir argument, which is useful for reducing log_dir "
+                   "collision")
 def train(model_name, genome_ids, external_validation_ids, metadata, lr,
           epochs, summarize, log_dir, summary_interval, train_ratio, length,
           seed, concise_summary, gpu, batch_size, data_dir,
-          additional_hyper_parameters):
+          additional_hyper_parameters, append_time):
     # TODO throw better error
     start_time = time.time()
     model = model_names_to_obj[model_name]
@@ -140,7 +144,8 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
             external_validation_classes=ext_classes,
             start_time=start_time, train_kwargs=train_kwargs,
             summary_kwargs=summary_kwargs,
-            additional_hparams=additional_hparams)
+            additional_hparams=additional_hparams,
+            append_time=append_time)
 
 
 def parse_hparams_file(fp):
