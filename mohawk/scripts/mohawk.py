@@ -96,9 +96,15 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
               default=os.curdir, required=False,
               help="Directory to look for data or to store data when it is "
                    "downloaded")
+@click.option('--additional-hyper-parameters', type=click.Path(exists=True),
+              default=None, required=False,
+              help="A tab separated file containing two columns, with the "
+                   "name of hyper-parameter in the first column, and the "
+                   "value in the second column, and no header.")
 def train(model_name, genome_ids, external_validation_ids, metadata, lr,
           epochs, summarize, log_dir, summary_interval, train_ratio, length,
-          seed, concise_summary, gpu, batch_size, data_dir):
+          seed, concise_summary, gpu, batch_size, data_dir,
+          additional_hyper_parameters):
     # TODO throw better error
     start_time = time.time()
     model = model_names_to_obj[model_name]
@@ -120,6 +126,11 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
                     }
     summary_kwargs = {'concise': concise_summary}
 
+    if additional_hyper_parameters is not None:
+        additional_hparams = parse_hparams_file(additional_hyper_parameters)
+    else:
+        additional_hparams = None
+
     trainer(model, n_reads, length, train_ratio, id_list=id_list,
             metadata=metadata, distribution=distribution, class_list=classes,
             batch_size=batch_size, data_directory=data_dir, random_seed=seed,
@@ -128,7 +139,21 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
             external_validation_distribution=ext_dist,
             external_validation_classes=ext_classes,
             start_time=start_time, train_kwargs=train_kwargs,
-            summary_kwargs=summary_kwargs)
+            summary_kwargs=summary_kwargs,
+            additional_hparams=additional_hparams)
+
+
+def parse_hparams_file(fp):
+    df = pd.read_csv(fp, sep='\t', index_col=0)
+    dict_ = df.to_dict()['0']
+    out_dict = dict()
+    for key, val in dict_.items():
+        # try to make the key numerical, but if not able to, leave as str
+        try:
+            out_dict[key] = float(val)
+        except KeyError:
+            out_dict[key] = val
+    return out_dict
 
 
 def id_file_loader(genome_ids):

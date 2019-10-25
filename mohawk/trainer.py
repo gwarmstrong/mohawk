@@ -23,6 +23,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
             external_validation_distribution: Optional[List[float]] = None,
             external_validation_classes: Optional[List] = None,
             start_time: Optional[float] = None,
+            additional_hparams: Optional[dict] = None,
             model_kwargs: Optional[dict] = None,
             train_kwargs: Optional[dict] = None,
             summary_kwargs: Optional[dict] = None) -> BaseModel:
@@ -67,6 +68,8 @@ def trainer(model: BaseModel, total_reads: int, length: int,
         An object for tracking amount of time since training has started.
         Can be passed in for convenience, but will be initialized if not
         provided
+    additional_hparams
+        hyper-parameters that can be passed into to be saved with the model
     model_kwargs
         kwargs to be passed to the `model`
     train_kwargs
@@ -84,6 +87,8 @@ def trainer(model: BaseModel, total_reads: int, length: int,
 
     """
 
+    if additional_hparams is None:
+        additional_hparams = dict()
     if model_kwargs is None:
         model_kwargs = dict()
     if train_kwargs is None:
@@ -205,6 +210,7 @@ def trainer(model: BaseModel, total_reads: int, length: int,
     hparam_dict.update(model_kwargs)
     hparam_dict.update({'model_type': model.__name__,
                         'random-seed': mod.seed})
+    hparam_dict.update(additional_hparams)
 
     metric_dict = {'best-val-accuracy': mod.best_val_accuracy,
                    'best-val-loss': mod.best_val_loss,
