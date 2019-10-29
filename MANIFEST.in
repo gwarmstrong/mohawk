@@ -1,0 +1,3 @@
+include README.md
+include LICENSE
+include mohawk/resources/assembly_summary_refseq.txt
