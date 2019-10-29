@@ -77,7 +77,6 @@ class FormattingTests(unittest.TestCase):
         #                       0123456789012345678901234567890123456789
         sequences = [skbio.DNA('ATGCAATTGGCCAAATTTGGGCCCAAAATTTTGGGGCCCC'),
                      skbio.DNA('CGTACCGGTT')]
-        fullseq = skbio.DNA.concat(sequences)
 
         depth = 100
         length = 15
