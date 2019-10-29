@@ -154,6 +154,7 @@ def sample_from_contig_set(sequences, depth, length, randfunc):
 
     contig_info = zip(breakpoints[:-1], breakpoints[1:], n_per_contig)
     loci = np.hstack([locus_generator(start, stop, length, n, randfunc)
-                      for start, stop, n in contig_info])
+                      for start, stop, n in contig_info
+                      if stop - length > start])
 
     return extract_subsequences(sequence_encoded, loci, length)

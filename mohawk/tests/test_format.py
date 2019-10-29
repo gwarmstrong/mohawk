@@ -69,6 +69,21 @@ class FormattingTests(unittest.TestCase):
         d = {0: 'A', 1: 'T', 2: 'G', 3: 'C'}
         return ''.join((d[c] for c in seq_as_array))
 
+    def test_sample_from_contig_set_one_short(self):
+        randfunc = np.random.randint
+
+        np.random.seed(1234)
+        # An integration test
+        #                       0123456789012345678901234567890123456789
+        sequences = [skbio.DNA('ATGCAATTGGCCAAATTTGGGCCCAAAATTTTGGGGCCCC'),
+                     skbio.DNA('CGTACCGGTT')]
+        fullseq = skbio.DNA.concat(sequences)
+
+        depth = 100
+        length = 15
+
+        obs = sample_from_contig_set(sequences, depth, length, randfunc)
+
     def test_sample_from_contig_set(self):
         def mock(start, stop, n):
             if start == 0:
