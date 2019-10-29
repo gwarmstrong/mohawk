@@ -325,7 +325,9 @@ def train_helper(model_name, genome_ids,
                     'log_dir': log_dir,
                     }
     summary_kwargs = {'concise': concise_summary}
-    if additional_hyper_parameters is not None:
+    if isinstance(additional_hyper_parameters, dict):
+        additional_hparams = additional_hyper_parameters
+    elif additional_hyper_parameters is not None:
         additional_hparams = parse_hparams_file(additional_hyper_parameters)
     else:
         additional_hparams = None
