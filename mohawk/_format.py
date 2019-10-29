@@ -148,12 +148,13 @@ def sample_from_contig_set(sequences, depth, length, randfunc):
     sequence, breakpoints = join_contigs(sequences)
     sequence_encoded = encode_sequence(sequence)
 
-    sequence_lengths = np.diff(breakpoints)
+    sequence_lengths = np.maximum(np.diff(breakpoints) - length, 0)
     probabilities = sequence_lengths / sequence_lengths.sum()
     n_per_contig = np.random.multinomial(depth, probabilities)
 
     contig_info = zip(breakpoints[:-1], breakpoints[1:], n_per_contig)
-    loci = np.hstack([locus_generator(start, stop, length, n, randfunc)
-                      for start, stop, n in contig_info])
+    arrs = [locus_generator(start, stop, length, n, randfunc)
+            for start, stop, n in contig_info if n > 0]
+    loci = np.hstack(arrs)
 
     return extract_subsequences(sequence_encoded, loci, length)
