@@ -84,6 +84,8 @@ class FormattingTests(unittest.TestCase):
 
         obs = sample_from_contig_set(sequences, depth, length, randfunc)
 
+        self.assertEqual(depth, len(obs))
+
     def test_sample_from_contig_set(self):
         def mock(start, stop, n):
             if start == 0:
