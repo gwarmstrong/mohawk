@@ -6,7 +6,8 @@ from mohawk.data_downloader import data_downloader
 from mohawk.simulation import simulate_from_genomes
 from mohawk.dataset import SequenceDataset
 from typing import Optional, List
-from mohawk.models import BaseModel
+from mohawk.models import BaseModel, SmallConvNet, ConvNet2, ConvNetAvg, \
+    ConvNetAvg2, ConvNetAvg3, ConvNetAvg4, ConvNetAvg5, ConvNetAvg6
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -288,3 +289,94 @@ def train_val_split(num_samples, train_ratio, random_seed=None):
     train_indices = permutation[:train_max_index]
     test_indices = permutation[train_max_index:]
     return train_indices, test_indices
+
+
+# TODO incorporate defaults from mohawk train
+def train_helper(model_name, genome_ids,
+                 external_validation_ids=None,
+                 metadata=None,
+                 lr=0.0001,
+                 epochs=100,
+                 summarize=True,
+                 log_dir='runs/',
+                 summary_interval=5,
+                 train_ratio=0.8,
+                 length=150,
+                 seed=0,
+                 concise_summary=True,
+                 gpu=False,
+                 batch_size=64,
+                 data_dir=os.curdir,
+                 additional_hyper_parameters=None,
+                 append_time=True):
+    start_time = time.time()
+    model = model_names_to_obj[model_name]
+    id_list, distribution, classes, n_reads = id_file_loader(genome_ids)
+    if external_validation_ids is not None:
+        ext_ids, ext_dist, ext_classes, ext_reads = id_file_loader(
+            external_validation_ids)
+    else:
+        ext_ids, ext_dist, ext_classes, ext_reads = None, None, None, None
+    train_kwargs = {'gpu': gpu,
+                    'learning_rate': lr,
+                    'summary_interval': summary_interval,
+                    'epochs': epochs,
+                    'summarize': summarize,
+                    'log_dir': log_dir,
+                    }
+    summary_kwargs = {'concise': concise_summary}
+    if additional_hyper_parameters is not None:
+        additional_hparams = parse_hparams_file(additional_hyper_parameters)
+    else:
+        additional_hparams = None
+    trainer(model, n_reads, length, train_ratio, id_list=id_list,
+            metadata=metadata, distribution=distribution, class_list=classes,
+            batch_size=batch_size, data_directory=data_dir, random_seed=seed,
+            external_validation_ids=ext_ids,
+            n_external_validation_reads=ext_reads,
+            external_validation_distribution=ext_dist,
+            external_validation_classes=ext_classes,
+            start_time=start_time, train_kwargs=train_kwargs,
+            summary_kwargs=summary_kwargs,
+            additional_hparams=additional_hparams,
+            append_time=append_time)
+
+    return model
+
+
+def parse_hparams_file(fp):
+    df = pd.read_csv(fp, sep='\t', index_col=0)
+    dict_ = df.to_dict()['0']
+    out_dict = dict()
+    for key, val in dict_.items():
+        # try to make the key numerical, but if not able to, leave as str
+        try:
+            out_dict[key] = float(val)
+        except KeyError:
+            out_dict[key] = val
+    return out_dict
+
+
+model_names_to_obj = {'SmallConvNet': SmallConvNet,
+                      'ConvNet2': ConvNet2,
+                      'ConvNetAvg': ConvNetAvg,
+                      'ConvNetAvg2': ConvNetAvg2,
+                      'ConvNetAvg3': ConvNetAvg3,
+                      'ConvNetAvg4': ConvNetAvg4,
+                      'ConvNetAvg5': ConvNetAvg5,
+                      'ConvNetAvg6': ConvNetAvg6
+                      }
+
+
+def id_file_loader(genome_ids):
+    id_df = pd.read_csv(genome_ids, sep='\t')
+    id_list = id_df['id']
+    n_reads_by_genome = id_df['n_reads']
+    n_reads = int(n_reads_by_genome.sum())
+    distribution = n_reads_by_genome / n_reads
+    if 'class' in id_df.columns:
+        classes = id_df['class']
+    else:
+        classes = None
+
+    return id_list, distribution, classes, n_reads
