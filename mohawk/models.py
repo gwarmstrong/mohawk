@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.tensorboard import SummaryWriter
-from typing import Optional
+from typing import Optional, List
 from sklearn.metrics import f1_score, confusion_matrix
 import numpy as np
 import matplotlib.figure
@@ -826,5 +826,56 @@ class ConvNetAvg6(BaseModel):
         x = self.conv(data)
         # TODO pool across channel opposed to across sequence
         x = x.max(-1).values
+        x = self.fc(x)
+        return x
+
+
+class ConvNetAvg7(BaseModel):
+    def __init__(self,
+                 n_classes: int,
+                 seed: Optional[int] = None,
+                 fc_layers: Optional[List[int]] = None,
+                 ):
+        super(ConvNetAvg, self).__init__(seed=seed)
+
+        self.loss_fn = CrossEntropyLoss(reduction='sum')
+        self.optim = Adam
+        self.n_classes = n_classes
+
+        dilations = [1, 2, 4, 8, 16]
+        channels = [4, 20, 40, 80, 100, 120]  # first has to be 4
+        linear_sizes = [channels[-1]]
+        if fc_layers is not None:
+            linear_sizes += linear_sizes
+        linear_sizes.append(n_classes)
+
+        self.conv = nn.Sequential()
+        for i, d in enumerate(dilations):
+            self.conv.add_module('Conv_' + str(i),
+                                 nn.Conv1d(in_channels=channels[i],
+                                           out_channels=channels[i + 1],
+                                           kernel_size=5,
+                                           dilation=d
+                                           )
+                                 )
+            self.conv.add_module('Conv_' + str(i)+'_relu', nn.ReLU())
+
+        self.fc = nn.Sequential()
+        for i in range(1, len(linear_sizes)):
+            self.fc.add_module('FC_' + str(i),
+                               nn.Linear(linear_sizes[i - 1],
+                                         linear_sizes[i]),
+                               )
+            if i < len(linear_sizes) - 1:
+                self.fc.add_module('FC_' + str(i) + '_relu', nn.ReLU())
+            else:
+                self.fc.add_module('Softmax', nn.Softmax(dim=1))
+
+    def reinitialize(self):
+        return self.__class__(n_classes=self.n_classes, seed=self.seed)
+
+    def forward(self, data):
+        x = self.conv(data)
+        x = x.mean(-1)
         x = self.fc(x)
         return x
