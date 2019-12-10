@@ -7,7 +7,8 @@ from mohawk.simulation import simulate_from_genomes
 from mohawk.dataset import SequenceDataset
 from typing import Optional, List
 from mohawk.models import BaseModel, SmallConvNet, ConvNet2, ConvNetAvg, \
-    ConvNetAvg2, ConvNetAvg3, ConvNetAvg4, ConvNetAvg5, ConvNetAvg6
+    ConvNetAvg2, ConvNetAvg3, ConvNetAvg4, ConvNetAvg5, ConvNetAvg6, \
+    ConvNetAvg7
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -307,6 +308,7 @@ def train_helper(model_name, genome_ids,
                  gpu=False,
                  batch_size=64,
                  data_dir=os.curdir,
+                 model_kwargs=None,
                  additional_hyper_parameters=None,
                  append_time=True):
     start_time = time.time()
@@ -339,6 +341,7 @@ def train_helper(model_name, genome_ids,
             external_validation_distribution=ext_dist,
             external_validation_classes=ext_classes,
             start_time=start_time, train_kwargs=train_kwargs,
+            model_kwargs=model_kwargs,
             summary_kwargs=summary_kwargs,
             additional_hparams=additional_hparams,
             append_time=append_time)
@@ -366,7 +369,8 @@ model_names_to_obj = {'SmallConvNet': SmallConvNet,
                       'ConvNetAvg3': ConvNetAvg3,
                       'ConvNetAvg4': ConvNetAvg4,
                       'ConvNetAvg5': ConvNetAvg5,
-                      'ConvNetAvg6': ConvNetAvg6
+                      'ConvNetAvg6': ConvNetAvg6,
+                      'ConvNetAvg7': ConvNetAvg7,
                       }
 
 
