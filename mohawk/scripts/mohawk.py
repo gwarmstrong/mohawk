@@ -100,7 +100,9 @@ def train(model_name, genome_ids, external_validation_ids, metadata, lr,
     train_helper(model_name, genome_ids, external_validation_ids, metadata, lr,
                  epochs, summarize, log_dir, summary_interval, train_ratio,
                  length, seed, concise_summary, gpu, batch_size, data_dir,
-                 additional_hyper_parameters, append_time)
+                 additional_hyper_parameters, append_time,
+                 model_kwargs=None,
+                 )
 
 
 if __name__ == '__main__':

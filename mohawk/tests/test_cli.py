@@ -23,4 +23,9 @@ class TestCLI(testing.MohawkTestCase):
                       '--additional-hyper-parameters', hparams
                       ]
         result = runner.invoke(mohawk_cli.train, args=train_args)
-        self.assertEqual(result.exit_code, 0)
+        try:
+            self.assertEqual(0, result.exit_code)
+        except AssertionError:
+            ex = result.exception
+            error = Exception('Command failed with non-zero exit code')
+            raise error .with_traceback(ex.__traceback__)

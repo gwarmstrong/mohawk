@@ -308,9 +308,10 @@ def train_helper(model_name, genome_ids,
                  gpu=False,
                  batch_size=64,
                  data_dir=os.curdir,
-                 model_kwargs=None,
                  additional_hyper_parameters=None,
-                 append_time=True):
+                 append_time=True,
+                 model_kwargs=None,
+                 ):
     start_time = time.time()
     model = model_names_to_obj[model_name]
     id_list, distribution, classes, n_reads = id_file_loader(genome_ids)
@@ -341,9 +342,9 @@ def train_helper(model_name, genome_ids,
             external_validation_distribution=ext_dist,
             external_validation_classes=ext_classes,
             start_time=start_time, train_kwargs=train_kwargs,
-            model_kwargs=model_kwargs,
             summary_kwargs=summary_kwargs,
             additional_hparams=additional_hparams,
+            model_kwargs=model_kwargs,
             append_time=append_time)
 
     return model
