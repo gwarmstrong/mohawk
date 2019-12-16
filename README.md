@@ -27,7 +27,8 @@ classes on a given number of reads, you can use a command
 similar to the one shown below:
 
 ```bash
-mohawk train --genome-ids example_input/min-red_0.1__n_4__group_0__genome-ids.txt \
+mohawk train seq-by-seq-pytorch \
+    --genome-ids example_input/min-red_0.1__n_4__group_0__genome-ids.txt \
     --model-name ConvNetAvg \
     --log-dir example_output \
     --data-dir example_input/genomes \
@@ -40,7 +41,8 @@ An example of using the interface for using a pre-trained mohawk model
 to classify reads from a `fastq` file is included below:
 
 ```bash
-mohawk classify --model /path/to/model \
+mohawk characterize classify-seq-by-seq-pytorch \
+    --model /path/to/model \
     --sequence-file /path/to/input/fastq \
     --output-file /path/to/ouput/file \
     --length 150
