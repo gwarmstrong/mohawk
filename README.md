@@ -41,7 +41,7 @@ An example of using the interface for using a pre-trained mohawk model
 to classify reads from a `fastq` file is included below:
 
 ```bash
-mohawk characterize classify-seq-by-seq-pytorch
+mohawk characterize classify-seq-by-seq-pytorch \
     --model /path/to/model \
     --sequence-file /path/to/input/fastq \
     --output-file /path/to/ouput/file \
