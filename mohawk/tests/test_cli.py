@@ -22,5 +22,7 @@ class TestCLI(testing.MohawkTestCase):
                       '--data-dir', data_dir,
                       '--additional-hyper-parameters', hparams
                       ]
-        result = runner.invoke(mohawk_cli.train, args=train_args)
+        result = runner.invoke(
+            mohawk_cli.seq_by_seq_pytorch,
+            args=train_args)
         self.assertEqual(result.exit_code, 0)
