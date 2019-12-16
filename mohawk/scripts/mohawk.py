@@ -10,9 +10,19 @@ def mohawk():
     pass
 
 
+@mohawk.group()
+def train():
+    pass
+
+
+@mohawk.group()
+def characterize():
+    pass
+
+
 # TODO the sequence length should be determined by the model, and the error
 #  is that the sequence data given does not have the right length
-@mohawk.command()
+@characterize.command()
 @click.option('--model-path', type=click.Path(exists=True),
               help='A path to a trained model', required=True)
 @click.option('--sequence-file', type=click.File('rb'),
@@ -21,7 +31,8 @@ def mohawk():
               help='The file to save the output', required=True)
 @click.option('--length', type=int, default=150, required=False,
               help='The length of sequences to produce')
-def classify(model_path, sequence_file, output_file, length):
+def classify_seq_by_seq_pytorch(model_path, sequence_file, output_file,
+                                length):
     # TODO more options for fastq i/o
     format = 'fastq'
     format_kwargs = {'phred_offset': 33}
@@ -34,9 +45,7 @@ def classify(model_path, sequence_file, output_file, length):
 
 
 # TODO is there a way to do this programmatically?
-
-
-@mohawk.command()
+@train.command()
 @click.option('--model-name', type=str,  # TODO check if it is in dict() ?
               help='The name of the model type to train on', required=True)
 @click.option('--genome-ids', type=click.Path(exists=True),
@@ -92,10 +101,11 @@ def classify(model_path, sequence_file, output_file, length):
               help="Whether the time should be appended to the supplied "
                    "log_dir argument, which is useful for reducing log_dir "
                    "collision")
-def train(model_name, genome_ids, external_validation_ids, metadata, lr,
-          epochs, summarize, log_dir, summary_interval, train_ratio, length,
-          seed, concise_summary, gpu, batch_size, data_dir,
-          additional_hyper_parameters, append_time):
+def seq_by_seq_pytorch(model_name, genome_ids, external_validation_ids,
+                       metadata, lr, epochs, summarize, log_dir,
+                       summary_interval, train_ratio, length, seed,
+                       concise_summary, gpu, batch_size, data_dir,
+                       additional_hyper_parameters, append_time):
     # TODO throw better error
     train_helper(model_name, genome_ids, external_validation_ids, metadata, lr,
                  epochs, summarize, log_dir, summary_interval, train_ratio,
